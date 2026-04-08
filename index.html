@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>3D Periodic Table</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css">
+    <!-- Anime.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        :root {
+            /* 3D Elements Constants */
+            --w: 130px; --h: 170px;
+            --c-0: 255, 60, 60;      /* Nonmetal */
+            --c-1: 60, 255, 255;     /* Noble */
+            --c-2: 255, 165, 0;      /* Alkali */
+            --c-3: 255, 220, 0;      /* Alkaline */
+            --c-4: 150, 255, 60;     /* Metalloid */
+            --c-5: 0, 191, 255;      /* Halogen */
+            --c-6: 255, 105, 180;    /* Post-trans */
+            --c-7: 60, 200, 100;     /* Transition */
+            --c-8: 144, 238, 144;    /* Lanthanide */
+            --c-9: 221, 160, 221;    /* Actinide */
+            
+            --cam-x: 0px; --cam-y: 0px; --cam-z: -2600px;
+            --rot-x: 0deg; --rot-y: 0deg;
+
+            /* Dropdown UI Constants */
+            --bg:          #07080D;
+            --surface:     #0D0F17;
+            --surface-2:   #131622;
+            --surface-3:   #1A1E2E;
+            --border:      rgba(255,255,255,0.055);
+            --border-neon: rgba(0,224,255,0.18);
+            --neon:        #00E0FF;
+            --neon-dim:    rgba(0,224,255,0.08);
+            --neon-glow:   rgba(0,224,255,0.35);
+            --text:        #DDE3F0;
+            --text-2:      #6E7890;
+            --text-3:      #353B52;
+            --panel-w:     260px;
+            --r:           14px;
+            --spring:      cubic-bezier(0.16, 1, 0.3, 1);
+            --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at center, #11141d 0%, #07080D 100%);
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden; 
+            height: 100vh;
+            height: 100dvh; 
+            width: 100vw;
+            perspective: 1200px; cursor: grab;
+            -webkit-touch-callout: none;
+            touch-action: none;
+        }
+        body:active { cursor: grabbing; }
+
+        /* --- HAMBURGER BUTTON --- */
+        .hamburger {
+            position: fixed; top: max(20px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left));
+            width: 44px; height: 44px; border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(13,15,23,0.8);
+            backdrop-filter: blur(10px);
+            cursor: pointer; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px;
+            transition: background .2s, border-color .25s, box-shadow .25s;
+            z-index: 160;
+        }
+        .hamburger:hover { border-color: var(--border-neon); background: var(--neon-dim); box-shadow: 0 0 14px var(--neon-dim); }
+        .hamburger.active {
+            border-color: rgba(0,224,255,0.4); background: rgba(0,224,255,0.07);
+            box-shadow: 0 0 0 3px rgba(0,224,255,0.10), 0 0 20px rgba(0,224,255,0.12);
+        }
+        .bar { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--text-2); transition: background .25s; }
+        .hamburger:hover .bar, .hamburger.active .bar { background: var(--neon); }
+
+        /* --- DROPDOWN PANEL --- */
+        .dropdown-wrapper {
+            position: fixed; top: calc(max(20px, env(safe-area-inset-top)) + 55px); left: max(10px, env(safe-area-inset-left)); width: var(--panel-w);
+            z-index: 150; overflow: hidden; max-height: 0;
+            transition: max-height .56s var(--spring);
+            font-family: 'Outfit', sans-serif;
+        }
+        .dropdown-wrapper.open { max-height: 600px; }
+
+        .dropdown-panel {
+            margin: 0 10px 15px;
+            background: rgba(13,15,23,0.85); backdrop-filter: blur(28px) saturate(160%);
+            border: 1px solid var(--border); border-radius: var(--r); padding: 10px;
+            position: relative;
+            box-shadow: 0 0 0 1px rgba(0,224,255,0.05), 0 32px 64px rgba(0,0,0,0.72), 0 0 40px rgba(0,224,255,0.04);
+            transform: translateY(-14px) scale(0.97); opacity: 0; transform-origin: top left;
+            transition: transform .46s var(--spring) .04s, opacity .28s var(--ease) .04s;
+            will-change: transform, opacity;
+        }
+        .dropdown-wrapper.open .dropdown-panel { transform: translateY(0) scale(1); opacity: 1; }
+
+        .dropdown-panel::before {
+            content: ''; position: absolute; top:-1px; left:16px; right:16px; height:1px;
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            opacity: 0; transition: opacity .4s var(--ease) .22s;
+        }
+        .dropdown-wrapper.open .dropdown-panel::before { opacity: 0.6; }
+
+        .close-row {
+            display: flex; align-items: center; justify-content: flex-end;
+            padding-bottom: 6px; opacity: 0; transform: translateX(-8px);
+            transition: opacity .28s var(--ease) .08s, transform .34s var(--spring) .08s;
+        }
+        .dropdown-wrapper.open .close-row { opacity: 1; transform: translateX(0); }
+        .close-btn {
+            width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--surface-2); color: var(--text-3); font-size: 12px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .close-btn:hover { background: rgba(255,75,75,0.15); border-color: rgba(255,75,75,0.3); color: #FF6B6B; box-shadow: 0 0 12px rgba(255,75,75,0.2); }
+
+        .divider {
+            height: 1px; margin: 8px 4px; background: linear-gradient(90deg, var(--border-neon), var(--border), transparent);
+            opacity: 0; transition: opacity .3s var(--ease);
+        }
+        .dropdown-wrapper.open .d1 { opacity: 1; transition-delay: .12s; }
+        .dropdown-wrapper.open .d2 { opacity: 1; transition-delay: .28s; }
+        
+        .section-label {
+            padding: 4px 8px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
+            letter-spacing: .16em; text-transform: uppercase; color: var(--text-3);
+            display: flex; align-items: center; gap: 6px; opacity: 0; transform: translateX(-6px);
+            transition: opacity .28s var(--ease), transform .32s var(--spring);
+        }
+        .section-label::after { content:''; flex:1; height:1px; background: var(--border); }
+        .dropdown-wrapper.open .sl1 { opacity:1; transform:translateX(0); transition-delay:.13s; }
+        .dropdown-wrapper.open .sl2 { opacity:1; transform:translateX(0); transition-delay:.29s; }
+
+        /* Layout Items */
+        .layout-items { display: flex; flex-direction: column; gap: 3px; }
+        .layout-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: 9px; cursor: pointer; position: relative; overflow: hidden;
+            color: var(--text-2); font-size: 14px; font-weight: 500; letter-spacing: .02em;
+            border: 1px solid transparent; opacity: 0; transform: translateX(-10px);
+            transition: color .2s, background .2s, border-color .2s, box-shadow .2s, opacity .32s, transform .38s var(--spring);
+        }
+        .layout-item::after {
+            content:''; position:absolute; inset:0;
+            background: linear-gradient(90deg, transparent 0%, rgba(0,224,255,0.05) 50%, transparent 100%);
+            transform: translateX(-100%); transition: transform .5s var(--ease);
+        }
+        .layout-item:hover::after { transform: translateX(100%); }
+        .layout-item:hover { color: var(--text); background: var(--neon-dim); border-color: rgba(0,224,255,0.10); }
+        .layout-item.selected {
+            color: var(--neon); background: rgba(0,224,255,0.07); border-color: rgba(0,224,255,0.18);
+            box-shadow: 0 0 18px rgba(0,224,255,0.06), inset 0 0 14px rgba(0,224,255,0.03);
+        }
+        .layout-item.selected::before {
+            content:''; position:absolute; left:-1px; top:20%; bottom:20%; width:2px; border-radius:2px;
+            background: var(--neon); box-shadow: 0 0 8px var(--neon-glow), 0 0 16px var(--neon-dim);
+        }
+        .item-icon { width: 20px; font-size: 14px; display: flex; justify-content: center; color: var(--text-3); transition: .2s; }
+        .layout-item:hover .item-icon { color: var(--text-2); }
+        .layout-item.selected .item-icon { color: var(--neon); filter: drop-shadow(0 0 5px var(--neon-glow)); }
+        .item-name { flex: 1; transition: 0.3s; }
+        .item-check {
+            font-size: 11px; color: var(--neon); opacity: 0; transform: scale(0.4) rotate(-10deg);
+            transition: opacity .22s var(--ease), transform .28s var(--spring); filter: drop-shadow(0 0 4px var(--neon-glow));
+        }
+        .layout-item.selected .item-check { opacity: 1; transform: scale(1) rotate(0deg); }
+
+        .dropdown-wrapper.open .layout-item:nth-child(1) { opacity:1; transform:translateX(0); transition-delay:.15s; }
+        .dropdown-wrapper.open .layout-item:nth-child(2) { opacity:1; transform:translateX(0); transition-delay:.18s; }
+        .dropdown-wrapper.open .layout-item:nth-child(3) { opacity:1; transform:translateX(0); transition-delay:.21s; }
+        .dropdown-wrapper.open .layout-item:nth-child(4) { opacity:1; transform:translateX(0); transition-delay:.24s; }
+
+        /* Language Toggle Pill */
+        .lang-section { padding: 8px 4px 4px; opacity:0; transform:translateX(-6px); transition: opacity .3s var(--ease) .31s, transform .36s var(--spring) .31s; }
+        .dropdown-wrapper.open .lang-section { opacity: 1; transform: translateX(0); }
+        
+        .lang-toggle {
+            position: relative; display: flex; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 9px; padding: 4px;
+        }
+        .lang-toggle::before {
+            content: ''; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+            border-radius: 6px; background: var(--surface-3); border: 1px solid var(--border-neon);
+            box-shadow: 0 0 10px rgba(0,224,255,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+            transition: left .32s var(--spring); pointer-events: none;
+        }
+        .lang-toggle.id-active::before { left: 50%; }
+
+        .lang-btn {
+            flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+            letter-spacing: .1em; padding: 8px 0; text-align: center; cursor: pointer;
+            border: none; background: none; color: var(--text-3); position: relative; z-index: 1;
+            transition: color .25s var(--ease);
+        }
+        .lang-btn.active { color: var(--neon); text-shadow: 0 0 10px var(--neon-glow); }
+
+        /* --- BACKDROP --- */
+        .backdrop {
+            position: fixed; inset: 0; z-index: 130; pointer-events: none;
+            transition: background .3s var(--ease), backdrop-filter .3s;
+        }
+        .backdrop.active { pointer-events: auto; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
+        
+        .helper-text {
+            position: fixed; 
+            bottom: max(25px, calc(25px + env(safe-area-inset-bottom)));
+            left: 50%; transform: translateX(-50%);
+            width: max-content; max-width: 90vw; 
+            color: rgba(255,255,255,0.6); font-size: 12px; font-family: 'Outfit', sans-serif;
+            background: rgba(13,15,23,0.75); padding: 8px 20px; border-radius: 20px;
+            pointer-events: none; border: 1px solid var(--border); text-align: center;
+            backdrop-filter: blur(8px); z-index: 10; 
+            display: flex; flex-direction: column;
+            line-height: 1.5; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: opacity 0.3s;
+        }
+        .helper-text .main-hlp { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .helper-text span { color: var(--neon); font-weight: 600; text-shadow: 0 0 8px var(--neon-glow); }
+
+        /* --- 3D CORE & ELEMENTS --- */
+        #scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-style: preserve-3d; }
+        #scene-camera { position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate3d(var(--cam-x), var(--cam-y), var(--cam-z)); will-change: transform; }
+        #scene-rotator { position: absolute; top: 0; left: 0; transform-style: preserve-3d; transform: rotateX(var(--rot-x)) rotateY(var(--rot-y)); will-change: transform; }
+        #scene-content { position: absolute; transform-style: preserve-3d; }
+
+        .element {
+            position: absolute; width: var(--w); height: var(--h);
+            left: calc(-1 * var(--w) / 2); top: calc(-1 * var(--h) / 2);
+            background: rgba(var(--color-rgb), 0.08); border: 1px solid rgba(var(--color-rgb), 0.4);
+            border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; transition: background 0.3s, border-color 0.3s;
+            cursor: pointer; box-shadow: 0 0 15px rgba(0,0,0,0.8); pointer-events: auto;
+            will-change: transform;
+        }
+        .element:hover {
+            background: rgba(var(--color-rgb), 0.3); border-color: rgba(var(--color-rgb), 1);
+            box-shadow: 0 0 30px rgba(var(--color-rgb), 0.6), inset 0 0 15px rgba(var(--color-rgb), 0.3); z-index: 10;
+        }
+        .element.pressing { background: rgba(var(--color-rgb), 0.6); box-shadow: 0 0 35px rgba(var(--color-rgb), 1); }
+        .element-number { position: absolute; top: 6px; right: 8px; font-size: 13px; color: rgba(var(--color-rgb), 0.8); }
+        .element-symbol { font-size: 56px; font-weight: bold; color: rgba(var(--color-rgb), 1); line-height: 1; margin-bottom: 5px; text-shadow: 0 0 12px rgba(var(--color-rgb), 0.5); pointer-events: none;}
+        .element-title { font-size: 12.5px; color: rgba(var(--color-rgb), 0.9); pointer-events: none; text-transform: uppercase; font-family: 'Outfit', sans-serif;}
+
+        /* --- METADATA MODAL --- */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            z-index: 2000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            width: 340px; max-width: 90vw; padding: 25px; background: rgba(var(--modal-color), 0.08); font-family: 'Outfit', sans-serif;
+            border: 1px solid rgba(var(--modal-color), 0.8); border-radius: 12px;
+            box-shadow: 0 0 50px rgba(var(--modal-color), 0.3), inset 0 0 20px rgba(var(--modal-color), 0.1);
+            color: rgba(var(--modal-color), 1); transform: translateY(30px) scale(0.9); transition: transform 0.3s var(--spring);
+            position: relative;
+        }
+        #modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .modal-symbol { font-size: 70px; font-family: 'Share Tech Mono'; font-weight: bold; line-height: 1; text-shadow: 0 0 15px rgba(var(--modal-color), 0.6);}
+        .modal-number { font-size: 28px; font-family: 'JetBrains Mono'; opacity: 0.8;}
+        .modal-name { font-size: 26px; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid rgba(var(--modal-color), 0.4); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;}
+        .modal-stat { font-size: 15px; margin-bottom: 10px; opacity: 0.9; display: flex; justify-content: space-between;}
+        
+        .modal-close-btn {
+            position: absolute; top: -15px; right: -15px; width: 36px; height: 36px; border-radius: 50%;
+            background: #111; border: 2px solid rgba(var(--modal-color), 1); color: white; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; font-size: 14px; transition: 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .modal-close-btn:hover { background: rgba(var(--modal-color), 1); color: black; transform: scale(1.1); }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="backdrop" id="backdrop"></div>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+
+    <div class="dropdown-wrapper" id="dropdownWrapper">
+        <div class="dropdown-panel">
+            <div class="close-row">
+                <button class="close-btn" id="closeBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="divider d1"></div>
+            <div class="section-label sl1" id="lbl-layout">Layout</div>
+            
+            <div class="layout-items">
+                <div class="layout-item selected" data-layout="table">
+                    <span class="item-icon"><i class="fa-solid fa-table-cells"></i></span>
+                    <span class="item-name" id="lbl-table">Table</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="sphere">
+                    <span class="item-icon"><i class="fa-solid fa-globe"></i></span>
+                    <span class="item-name" id="lbl-sphere">Sphere</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="helix">
+                    <span class="item-icon"><i class="fa-solid fa-dna"></i></span>
+                    <span class="item-name" id="lbl-helix">Helix</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="grid">
+                    <span class="item-icon"><i class="fa-solid fa-grip"></i></span>
+                    <span class="item-name" id="lbl-grid">Grid</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+            </div>
+
+            <div class="divider d2"></div>
+            <div class="section-label sl2" id="lbl-lang">Language</div>
+            
+            <div class="lang-section">
+                <div class="lang-toggle" id="langToggle">
+                    <button class="lang-btn" data-lang="EN">EN</button>
+                    <button class="lang-btn" data-lang="ID">ID</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="helper-text" id="helper-txt">
+        <div class="main-hlp"><i class="fa-regular fa-hand-pointer"></i> <span>TAHAN 0.5s</span> di unsur untuk detail</div>
+    </div>
+
+    <div id="scene">
+        <div id="scene-camera">
+            <div id="scene-rotator">
+                <div id="scene-content"></div>    
+            </div>
+        </div>
+    </div>    
+
+    <div id="modal-overlay">
+        <div class="modal-card" id="modal-card" style="--modal-color: 255,255,255;">
+            <button class="modal-close-btn" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-header">
+                <div class="modal-symbol" id="m-sym">Al</div>
+                <div class="modal-number" id="m-num">13</div>
+            </div>
+            <div class="modal-name" id="m-name">Aluminium</div>
+            <div class="modal-stat"><span id="lbl-mass" style="opacity:0.7">Massa Atom:</span> <span id="m-mass" style="font-weight:600"></span></div>
+            <div class="modal-stat"><span id="lbl-den" style="opacity:0.7">Massa Jenis:</span> <span id="m-den" style="font-weight:600"></span></div>
+            <div class="modal-stat"><span id="lbl-melt" style="opacity:0.7">Titik Leleh:</span> <span id="m-melt" style="font-weight:600"></span></div>
+            <div class="modal-stat"><span id="lbl-boil" style="opacity:0.7">Titik Didih:</span> <span id="m-boil" style="font-weight:600"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA TRANSLATION ---
+        const elementsData = [
+            'H', 'Hydrogen', 'Hidrogen', 0, 1, 1, '1.008 u', '0.089 g/l', '-259.16 °C', '-252.88 °C',
+            'He', 'Helium', 'Helium', 1, 18, 1, '4.0026 u', '0.178 g/l', '-272.2 °C', '-268.93 °C',
+            'Li', 'Lithium', 'Litium', 2, 1, 2, '6.94 u', '0.534 g/cm³', '180.5 °C', '1329.85 °C',
+            'Be', 'Beryllium', 'Berilium', 3, 2, 2, '9.012 u', '1.85 g/cm³', '1286.85 °C', '2468.85 °C',
+            'B', 'Boron', 'Boron', 4, 13, 2, '10.81 u', '2.08 g/cm³', '2075.85 °C', '3926.85 °C',
+            'C', 'Carbon', 'Karbon', 0, 14, 2, '12.011 u', '1.821 g/cm³', 'Menyublim', 'Menyublim',
+            'N', 'Nitrogen', 'Nitrogen', 0, 15, 2, '14.007 u', '1.251 g/l', '-210 °C', '-195.79 °C',
+            'O', 'Oxygen', 'Oksigen', 0, 16, 2, '15.999 u', '1.429 g/l', '-218.79 °C', '-182.96 °C',
+            'F', 'Fluorine', 'Fluor', 5, 17, 2, '18.998 u', '1.696 g/l', '-219.67 °C', '-188.12 °C',
+            'Ne', 'Neon', 'Neon', 1, 18, 2, '20.179 u', '0.900 g/l', '-248.59 °C', '-246.05 °C',
+            'Na', 'Sodium', 'Natrium', 2, 1, 3, '22.989 u', '0.968 g/cm³', '97.79 °C', '882.94 °C',
+            'Mg', 'Magnesium', 'Magnesium', 3, 2, 3, '24.305 u', '1.738 g/cm³', '649.85 °C', '1089.85 °C',
+            'Al', 'Aluminium', 'Aluminium', 6, 13, 3, '26.981 u', '2.7 g/cm³', '660.32 °C', '2469.85 °C',
+            'Si', 'Silicon', 'Silikon', 4, 14, 3, '28.085 u', '2.329 g/cm³', '1413.85 °C', '3264.85 °C',
+            'P', 'Phosphorus', 'Fosfor', 0, 15, 3, '30.973 u', '1.823 g/cm³', '44.1 °C', '280.5 °C',
+            'S', 'Sulfur', 'Belerang', 0, 16, 3, '32.06 u', '2.07 g/cm³', '115.21 °C', '444.65 °C',
+            'Cl', 'Chlorine', 'Klorin', 5, 17, 3, '35.45 u', '3.2 g/l', '-101.55 °C', '-34.04 °C',
+            'Ar', 'Argon', 'Argon', 1, 18, 3, '39.948 u', '1.784 g/l', '-189.34 °C', '-185.85 °C',
+            'K', 'Potassium', 'Kalium', 2, 1, 4, '39.098 u', '0.862 g/cm³', '63.55 °C', '758.85 °C',
+            'Ca', 'Calcium', 'Kalsium', 3, 2, 4, '40.078 u', '1.55 g/cm³', '841.85 °C', '1483.85 °C',
+            'Sc', 'Scandium', 'Skandium', 7, 3, 4, '44.955 u', '2.985 g/cm³', '1540.85 °C', '2835.85 °C',
+            'Ti', 'Titanium', 'Titanium', 7, 4, 4, '47.867 u', '4.506 g/cm³', '1667.85 °C', '3286.85 °C',
+            'V', 'Vanadium', 'Vanadium', 7, 5, 4, '50.941 u', '6.0 g/cm³', '1909.85 °C', '3406.85 °C',
+            'Cr', 'Chromium', 'Kromium', 7, 6, 4, '51.996 u', '7.19 g/cm³', '1906.85 °C', '2670.85 °C',
+            'Mn', 'Manganese', 'Mangan', 7, 7, 4, '54.938 u', '7.21 g/cm³', '1245.85 °C', '2060.85 °C',
+            'Fe', 'Iron', 'Besi', 7, 8, 4, '55.845 u', '7.874 g/cm³', '1537.85 °C', '2860.85 °C',
+            'Co', 'Cobalt', 'Kobalt', 7, 9, 4, '58.933 u', '8.9 g/cm³', '1494.85 °C', '2926.85 °C',
+            'Ni', 'Nickel', 'Nikel', 7, 10, 4, '58.693 u', '8.908 g/cm³', '1454.85 °C', '2729.85 °C',
+            'Cu', 'Copper', 'Tembaga', 7, 11, 4, '63.546 u', '8.96 g/cm³', '1084.62 °C', '2561.85 °C',
+            'Zn', 'Zinc', 'Seng', 7, 12, 4, '65.38 u', '7.14 g/cm³', '419.53 °C', '907 °C',
+            'Ga', 'Gallium', 'Galium', 6, 13, 4, '69.723 u', '5.91 g/cm³', '29.76 °C', '2204 °C',
+            'Ge', 'Germanium', 'Germanium', 4, 14, 4, '72.630 u', '5.323 g/cm³', '938.25 °C', '2833 °C',
+            'As', 'Arsenic', 'Arsenik', 4, 15, 4, '74.921 u', '5.727 g/cm³', '817 °C', '614 °C',
+            'Se', 'Selenium', 'Selenium', 0, 16, 4, '78.971 u', '4.81 g/cm³', '221 °C', '685 °C',
+            'Br', 'Bromine', 'Bromin', 5, 17, 4, '79.904 u', '3.12 g/cm³', '-7.2 °C', '58.8 °C',
+            'Kr', 'Krypton', 'Kripton', 1, 18, 4, '83.798 u', '3.75 g/l', '-157.36 °C', '-153.22 °C',
+            'Rb', 'Rubidium', 'Rubidium', 2, 1, 5, '85.467 u', '1.532 g/cm³', '39.3 °C', '688 °C',
+            'Sr', 'Strontium', 'Stronsium', 3, 2, 5, '87.62 u', '2.63 g/cm³', '777 °C', '1382 °C',
+            'Y', 'Yttrium', 'Itrium', 7, 3, 5, '88.905 u', '4.47 g/cm³', '1522 °C', '3338 °C',
+            'Zr', 'Zirconium', 'Zirkonium', 7, 4, 5, '91.224 u', '6.52 g/cm³', '1855 °C', '4409 °C',
+            'Nb', 'Niobium', 'Niobium', 7, 5, 5, '92.906 u', '8.57 g/cm³', '2477 °C', '4744 °C',
+            'Mo', 'Molybdenum', 'Molibdenum', 7, 6, 5, '95.95 u', '10.28 g/cm³', '2623 °C', '4639 °C',
+            'Tc', 'Technetium', 'Teknesium', 7, 7, 5, '98 u', '11.5 g/cm³', '2157 °C', '4265 °C',
+            'Ru', 'Ruthenium', 'Rutenium', 7, 8, 5, '101.07 u', '12.37 g/cm³', '2334 °C', '4150 °C',
+            'Rh', 'Rhodium', 'Rodium', 7, 9, 5, '102.91 u', '12.45 g/cm³', '1964 °C', '3695 °C',
+            'Pd', 'Palladium', 'Paladium', 7, 10, 5, '106.42 u', '12.02 g/cm³', '1554.9 °C', '2963 °C',
+            'Ag', 'Silver', 'Perak', 7, 11, 5, '107.86 u', '10.49 g/cm³', '961.78 °C', '2162 °C',
+            'Cd', 'Cadmium', 'Kadmium', 7, 12, 5, '112.41 u', '8.65 g/cm³', '321.07 °C', '767 °C',
+            'In', 'Indium', 'Indium', 6, 13, 5, '114.81 u', '7.31 g/cm³', '156.6 °C', '2072 °C',
+            'Sn', 'Tin', 'Timah', 6, 14, 5, '118.71 u', '7.287 g/cm³', '231.93 °C', '2602 °C',
+            'Sb', 'Antimony', 'Antimon', 4, 15, 5, '121.76 u', '6.697 g/cm³', '630.63 °C', '1587 °C',
+            'Te', 'Tellurium', 'Telurium', 4, 16, 5, '127.6 u', '6.24 g/cm³', '449.51 °C', '988 °C',
+            'I', 'Iodine', 'Yodium', 5, 17, 5, '126.9 u', '4.93 g/cm³', '113.7 °C', '184.3 °C',
+            'Xe', 'Xenon', 'Xenon', 1, 18, 5, '131.29 u', '5.89 g/l', '-111.7 °C', '-108.12 °C',
+            'Cs', 'Caesium', 'Sesium', 2, 1, 6, '132.9 u', '1.93 g/cm³', '28.5 °C', '671 °C',
+            'Ba', 'Barium', 'Barium', 3, 2, 6, '137.32 u', '3.51 g/cm³', '727 °C', '1897 °C',
+            'La', 'Lanthanum', 'Lantanum', 8, 3, 6, '138.9 u', '6.15 g/cm³', '920 °C', '3464 °C',
+            'Ce', 'Cerium', 'Serium', 8, 4, 9, '140.11 u', '6.77 g/cm³', '795 °C', '3443 °C',
+            'Pr', 'Praseodymium', 'Praseodimium', 8, 5, 9, '140.9 u', '6.77 g/cm³', '931 °C', '3520 °C',
+            'Nd', 'Neodymium', 'Neodimium', 8, 6, 9, '144.24 u', '7.01 g/cm³', '1024 °C', '3074 °C',
+            'Pm', 'Promethium', 'Prometium', 8, 7, 9, '145 u', '7.26 g/cm³', '1042 °C', '3000 °C',
+            'Sm', 'Samarium', 'Samarium', 8, 8, 9, '150.36 u', '7.52 g/cm³', '1072 °C', '1794 °C',
+            'Eu', 'Europium', 'Europium', 8, 9, 9, '151.96 u', '5.24 g/cm³', '822 °C', '1529 °C',
+            'Gd', 'Gadolinium', 'Gadolinium', 8, 10, 9, '157.25 u', '7.9 g/cm³', '1312 °C', '3273 °C',
+            'Tb', 'Terbium', 'Terbium', 8, 11, 9, '158.92 u', '8.23 g/cm³', '1356 °C', '3230 °C',
+            'Dy', 'Dysprosium', 'Disprosium', 8, 12, 9, '162.5 u', '8.54 g/cm³', '1407 °C', '2562 °C',
+            'Ho', 'Holmium', 'Holmium', 8, 13, 9, '164.93 u', '8.8 g/cm³', '1470 °C', '2720 °C',
+            'Er', 'Erbium', 'Erbium', 8, 14, 9, '167.25 u', '9.07 g/cm³', '1529 °C', '2868 °C',
+            'Tm', 'Thulium', 'Tulium', 8, 15, 9, '168.93 u', '9.32 g/cm³', '1545 °C', '1950 °C',
+            'Yb', 'Ytterbium', 'Iterbium', 8, 16, 9, '173.05 u', '6.9 g/cm³', '824 °C', '1196 °C',
+            'Lu', 'Lutetium', 'Lutesium', 8, 17, 9, '174.96 u', '9.84 g/cm³', '1652 °C', '3402 °C',
+            'Hf', 'Hafnium', 'Hafnium', 7, 4, 6, '178.49 u', '13.31 g/cm³', '2233 °C', '4603 °C',
+            'Ta', 'Tantalum', 'Tantalum', 7, 5, 6, '180.94 u', '16.69 g/cm³', '3017 °C', '5458 °C',
+            'W', 'Tungsten', 'Wolfram', 7, 6, 6, '183.84 u', '19.25 g/cm³', '3422 °C', '5555 °C',
+            'Re', 'Rhenium', 'Renium', 7, 7, 6, '186.2 u', '21.02 g/cm³', '3186 °C', '5596 °C',
+            'Os', 'Osmium', 'Osmium', 7, 8, 6, '190.23 u', '22.59 g/cm³', '3033 °C', '5012 °C',
+            'Ir', 'Iridium', 'Iridium', 7, 9, 6, '192.21 u', '22.56 g/cm³', '2446 °C', '4428 °C',
+            'Pt', 'Platinum', 'Platina', 7, 10, 6, '195.08 u', '21.45 g/cm³', '1768.3 °C', '3825 °C',
+            'Au', 'Gold', 'Emas', 7, 11, 6, '196.96 u', '19.3 g/cm³', '1064.18 °C', '2856 °C',
+            'Hg', 'Mercury', 'Raksa', 7, 12, 6, '200.59 u', '13.534 g/cm³', '-38.83 °C', '356.73 °C',
+            'Tl', 'Thallium', 'Talium', 6, 13, 6, '204.38 u', '11.85 g/cm³', '304 °C', '1473 °C',
+            'Pb', 'Lead', 'Timbal', 6, 14, 6, '207.2 u', '11.34 g/cm³', '327.46 °C', '1749 °C',
+            'Bi', 'Bismuth', 'Bismut', 6, 15, 6, '208.98 u', '9.78 g/cm³', '271.3 °C', '1564 °C',
+            'Po', 'Polonium', 'Polonium', 4, 16, 6, '209 u', '9.196 g/cm³', '254 °C', '962 °C',
+            'At', 'Astatine', 'Astatin', 5, 17, 6, '210 u', 'N/A', '302 °C', '337 °C',
+            'Rn', 'Radon', 'Radon', 1, 18, 6, '222 u', '9.73 g/l', '-71 °C', '-61.7 °C',
+            'Fr', 'Francium', 'Fransium', 2, 1, 7, '223 u', 'N/A', '27 °C', '677 °C',
+            'Ra', 'Radium', 'Radium', 3, 2, 7, '226 u', '5.5 g/cm³', '700 °C', '1737 °C',
+            'Ac', 'Actinium', 'Aktinium', 9, 3, 7, '227 u', '10.07 g/cm³', '1050 °C', '3198 °C',
+            'Th', 'Thorium', 'Torium', 9, 4, 10, '232.03 u', '11.72 g/cm³', '1750 °C', '4788 °C',
+            'Pa', 'Protactinium', 'Protaktinium', 9, 5, 10, '231.03 u', '15.37 g/cm³', '1568 °C', '4027 °C',
+            'U', 'Uranium', 'Uranium', 9, 6, 10, '238.02 u', '19.1 g/cm³', '1132.2 °C', '4131 °C',
+            'Np', 'Neptunium', 'Neptunium', 9, 7, 10, '237 u', '20.25 g/cm³', '639 °C', '3902 °C',
+            'Pu', 'Plutonium', 'Plutonium', 9, 8, 10, '244 u', '19.816 g/cm³', '639.4 °C', '3228 °C',
+            'Am', 'Americium', 'Amerisium', 9, 9, 10, '243 u', '13.67 g/cm³', '1176 °C', '2607 °C',
+            'Cm', 'Curium', 'Kurium', 9, 10, 10, '247 u', '13.51 g/cm³', '1340 °C', '3110 °C',
+            'Bk', 'Berkelium', 'Berkelium', 9, 11, 10, '247 u', '14.78 g/cm³', '986 °C', '2627 °C',
+            'Cf', 'Californium', 'Kalifornium', 9, 12, 10, '251 u', '15.1 g/cm³', '900 °C', '1470 °C',
+            'Es', 'Einsteinium', 'Einsteinium', 9, 13, 10, '252 u', '8.84 g/cm³', '860 °C', '996 °C',
+            'Fm', 'Fermium', 'Fermium', 9, 14, 10, '257 u', 'N/A', '1527 °C', 'N/A',
+            'Md', 'Mendelevium', 'Mendelevium', 9, 15, 10, '258 u', 'N/A', '827 °C', 'N/A',
+            'No', 'Nobelium', 'Nobelium', 9, 16, 10, '259 u', 'N/A', '827 °C', 'N/A',
+            'Lr', 'Lawrencium', 'Lawrensium', 9, 17, 10, '262 u', 'N/A', '1627 °C', 'N/A',
+            'Rf', 'Rutherfordium', 'Ruterfordium', 7, 4, 7, '267 u', 'N/A', 'N/A', 'N/A',
+            'Db', 'Dubnium', 'Dubnium', 7, 5, 7, '268 u', 'N/A', 'N/A', 'N/A',
+            'Sg', 'Seaborgium', 'Seaborgium', 7, 6, 7, '269 u', 'N/A', 'N/A', 'N/A',
+            'Bh', 'Bohrium', 'Borium', 7, 7, 7, '270 u', 'N/A', 'N/A', 'N/A',
+            'Hs', 'Hassium', 'Hasium', 7, 8, 7, '277 u', 'N/A', 'N/A', 'N/A',
+            'Mt', 'Meitnerium', 'Meitnerium', 7, 9, 7, '278 u', 'N/A', 'N/A', 'N/A',
+            'Ds', 'Darmstadtium', 'Darmstadtium', 7, 10, 7, '281 u', 'N/A', 'N/A', 'N/A',
+            'Rg', 'Roentgenium', 'Rontgenium', 7, 11, 7, '282 u', 'N/A', 'N/A', 'N/A',
+            'Cn', 'Copernicium', 'Kopernisium', 7, 12, 7, '285 u', 'N/A', 'N/A', 'N/A',
+            'Nh', 'Nihonium', 'Nihonium', 6, 13, 7, '286 u', 'N/A', 'N/A', 'N/A',
+            'Fl', 'Flerovium', 'Flerovium', 6, 14, 7, '289 u', 'N/A', 'N/A', 'N/A',
+            'Mc', 'Moscovium', 'Moskovium', 6, 15, 7, '290 u', 'N/A', 'N/A', 'N/A',
+            'Lv', 'Livermorium', 'Livermorium', 6, 16, 7, '293 u', 'N/A', 'N/A', 'N/A',
+            'Ts', 'Tennessine', 'Tenesin', 5, 17, 7, '294 u', 'N/A', 'N/A', 'N/A',
+            'Og', 'Oganesson', 'Oganeson', 1, 18, 7, '294 u', 'N/A', 'N/A', 'N/A'
+        ];
+
+        let currentLanguage = 'EN';
+        const container = document.getElementById('scene-content');
+        const elements = [];
+        const STRIDE = 10;
+        const total = elementsData.length / STRIDE;
+        const layouts = { table: [], sphere: [], helix: [], grid: [] };
+
+        // --- DROPDOWN MENU LOGIC ---
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const dropdownWrap = document.getElementById('dropdownWrapper');
+        const backdrop     = document.getElementById('backdrop');
+        const closeBtn     = document.getElementById('closeBtn');
+        const langToggle   = document.getElementById('langToggle');
+
+        let isMenuOpen = false;
+
+        const openMenu = () => {
+            isMenuOpen = true; hamburgerBtn.classList.add('active'); dropdownWrap.classList.add('open'); backdrop.classList.add('active');
+        };
+        const closeMenu = () => {
+            isMenuOpen = false; hamburgerBtn.classList.remove('active'); dropdownWrap.classList.remove('open'); backdrop.classList.remove('active');
+        };
+
+        hamburgerBtn.addEventListener('click', e => { e.stopPropagation(); isMenuOpen ? closeMenu() : openMenu(); });
+        backdrop.addEventListener('click', closeMenu);
+        closeBtn.addEventListener('click', closeMenu);
+
+        // Language Logic (Dynamic & Reactive)
+        function setLang(lang) {
+            currentLanguage = lang;
+            const isID = (lang === 'ID');
+            
+            langToggle.classList.toggle('id-active', isID);
+            document.querySelectorAll('.lang-btn').forEach(btn => { btn.classList.toggle('active', btn.dataset.lang === lang); });
+
+            if(isID) {
+                document.getElementById('lbl-layout').innerText = 'TATA LETAK'; document.getElementById('lbl-table').innerText = 'Tabel';
+                document.getElementById('lbl-sphere').innerText = 'Bola'; document.getElementById('lbl-helix').innerText = 'Spiral';
+                document.getElementById('lbl-grid').innerText = 'Kisi'; document.getElementById('lbl-lang').innerText = 'BAHASA';
+
+                document.getElementById('helper-txt').innerHTML = `<div class="main-hlp"><i class="fa-regular fa-hand-pointer"></i> <span>TAHAN 0.5s</span> di unsur untuk detail</div>`;
+                document.getElementById('lbl-mass').innerText = 'Massa Atom:'; document.getElementById('lbl-den').innerText = 'Massa Jenis:';
+                document.getElementById('lbl-melt').innerText = 'Titik Leleh:'; document.getElementById('lbl-boil').innerText = 'Titik Didih:';
+            } else {
+                document.getElementById('lbl-layout').innerText = 'LAYOUT'; document.getElementById('lbl-table').innerText = 'Table';
+                document.getElementById('lbl-sphere').innerText = 'Sphere'; document.getElementById('lbl-helix').innerText = 'Helix';
+                document.getElementById('lbl-grid').innerText = 'Grid'; document.getElementById('lbl-lang').innerText = 'LANGUAGE';
+
+                document.getElementById('helper-txt').innerHTML = `<div class="main-hlp"><i class="fa-regular fa-hand-pointer"></i> <span>HOLD 0.5s</span> on element for details</div>`;
+                document.getElementById('lbl-mass').innerText = 'Atomic Mass:'; document.getElementById('lbl-den').innerText = 'Density:';
+                document.getElementById('lbl-melt').innerText = 'Melting Point:'; document.getElementById('lbl-boil').innerText = 'Boiling Point:';
+            }
+
+            for (let i = 0; i < total; i++) {
+                const nameEN = elementsData[i * STRIDE + 1], nameID = elementsData[i * STRIDE + 2];
+                elements[i].dom.querySelector('.element-title').innerText = isID ? nameID : nameEN;
+            }
+            if(isMenuOpen) setTimeout(closeMenu, 250); 
+        }
+
+        document.querySelectorAll('.lang-btn').forEach(btn => { btn.addEventListener('click', () => setLang(btn.dataset.lang)); });
+
+        // Layout Switcher Logic
+        let currentLayout = '';
+        function transformTo(layoutName) {
+            if (currentLayout === layoutName) return;
+            
+            document.querySelectorAll('.layout-item').forEach(i => i.classList.remove('selected'));
+            document.querySelector(`.layout-item[data-layout="${layoutName}"]`).classList.add('selected');
+
+            anime({
+                targets: elements.map(e => e.current),
+                x: (el, i) => layouts[layoutName][i].x, y: (el, i) => layouts[layoutName][i].y, z: (el, i) => layouts[layoutName][i].z,
+                rx: (el, i) => layouts[layoutName][i].rx, ry: (el, i) => layouts[layoutName][i].ry, rz: (el, i) => layouts[layoutName][i].rz,
+                duration: 2000, easing: 'easeOutCubic', delay: anime.stagger(12, {easing: 'easeOutQuad'}),
+                update: () => { elements.forEach(el => { el.dom.style.transform = `translate3d(${el.current.x}px, ${el.current.y}px, ${el.current.z}px) rotateY(${el.current.ry}rad) rotateX(${el.current.rx}rad) rotateZ(${el.current.rz}rad)`; }); }
+            });
+            resetCamera(); currentLayout = layoutName;
+            if(isMenuOpen) setTimeout(closeMenu, 250); 
+        }
+
+        document.querySelectorAll('.layout-item').forEach(item => { item.addEventListener('click', () => transformTo(item.dataset.layout)); });
+
+        // --- 3D ELEMENTS GENERATION & MATH ---
+        function showModalData(i, sym, nameEN, nameID, cat) {
+            document.getElementById('m-sym').innerText = sym; document.getElementById('m-num').innerText = i + 1;
+            document.getElementById('m-name').innerText = (currentLanguage === 'ID') ? nameID : nameEN;
+            document.getElementById('m-mass').innerText = elementsData[i * STRIDE + 6]; document.getElementById('m-den').innerText = elementsData[i * STRIDE + 7];
+            document.getElementById('m-melt').innerText = elementsData[i * STRIDE + 8]; document.getElementById('m-boil').innerText = elementsData[i * STRIDE + 9];
+            
+            document.getElementById('modal-card').style.setProperty('--modal-color', `var(--c-${cat})`);
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        for (let i = 0; i < total; i++) {
+            const sym = elementsData[i * STRIDE], nameEN = elementsData[i * STRIDE + 1], nameID = elementsData[i * STRIDE + 2];
+            const cat = elementsData[i * STRIDE + 3], col = elementsData[i * STRIDE + 4], row = elementsData[i * STRIDE + 5];
+            
+            const el = document.createElement('div');
+            el.className = 'element'; el.style.setProperty('--color-rgb', `var(--c-${cat})`);
+            el.innerHTML = `<div class="element-number">${i + 1}</div><div class="element-symbol">${sym}</div><div class="element-title">${nameEN}</div>`;
+
+            let pressTimer; let isPressing = false; let startPos = {x: 0, y: 0};
+            el.addEventListener('pointerdown', (e) => {
+                isPressing = true; startPos = {x: e.clientX, y: e.clientY}; el.classList.add('pressing');
+                pressTimer = setTimeout(() => { if(isPressing) { showModalData(i, sym, nameEN, nameID, cat); isPressing = false; el.classList.remove('pressing'); } }, 500); 
+            });
+            el.addEventListener('pointermove', (e) => {
+                if(!isPressing) return;
+                if(Math.hypot(e.clientX - startPos.x, e.clientY - startPos.y) > 5) { clearTimeout(pressTimer); isPressing = false; el.classList.remove('pressing'); }
+            });
+            const cancelPress = () => { clearTimeout(pressTimer); isPressing = false; el.classList.remove('pressing'); };
+            el.addEventListener('pointerup', cancelPress); el.addEventListener('pointerleave', cancelPress); el.addEventListener('pointercancel', cancelPress);
+
+            container.appendChild(el);
+            elements.push({ dom: el, current: { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 }});
+
+            // Math
+            const w = 150, h = 190;
+            layouts.table.push({ x: (col - 9.5) * w, y: (row - 5.5) * h, z: 0, rx: 0, ry: 0, rz: 0 });
+
+            const radius = 1100, phi = Math.acos(-1 + (2 * i) / total), theta = Math.sqrt(total * Math.PI) * phi;
+            const sx = radius * Math.cos(theta) * Math.sin(phi), sy = radius * Math.cos(phi), sz = radius * Math.sin(theta) * Math.sin(phi);
+            layouts.sphere.push({ x: sx, y: sy, z: sz, rx: Math.atan2(-sy, Math.sqrt(sx*sx + sz*sz)), ry: Math.atan2(sx, sz), rz: 0 });
+
+            const hTheta = i * 0.175 + Math.PI;
+            layouts.helix.push({ x: 1000 * Math.sin(hTheta), y: -(i * 10) + 500, z: 1000 * Math.cos(hTheta), rx: 0, ry: hTheta, rz: 0 });
+            layouts.grid.push({ x: ((i % 5) * 400) - 800, y: (-(Math.floor(i / 5) % 5) * 400) + 800, z: (Math.floor(i / 25)) * 1000 - 2000, rx: 0, ry: 0, rz: 0 });
+        }
+
+        // Modal Close Setup
+        document.getElementById('modal-overlay').addEventListener('click', () => document.getElementById('modal-overlay').classList.remove('active'));
+        document.getElementById('modal-card').addEventListener('click', e => e.stopPropagation());
+        document.getElementById('modalCloseBtn').addEventListener('click', () => document.getElementById('modal-overlay').classList.remove('active'));
+        
+        const rootStyles = document.documentElement.style;
+        let camX = 0, camY = 0, camZ = -2600, rotX = 0, rotY = 0;
+        let isRotating = false, isPanning = false, prevX = 0, prevY = 0, prevPinch = 0;
+        
+        let cameraNeedsUpdate = true;
+        function renderLoop() {
+            if(cameraNeedsUpdate) {
+                rootStyles.setProperty('--cam-x', `${camX}px`); rootStyles.setProperty('--cam-y', `${camY}px`); rootStyles.setProperty('--cam-z', `${camZ}px`);
+                rootStyles.setProperty('--rot-x', `${rotX}deg`); rootStyles.setProperty('--rot-y', `${rotY}deg`);
+                cameraNeedsUpdate = false;
+            }
+            requestAnimationFrame(renderLoop);
+        }
+        requestAnimationFrame(renderLoop);
+
+        function resetCamera() {
+            anime({
+                targets: { cx: camX, cy: camY, cz: (currentLayout==='table' ? -2600 : -3200), rx: rotX, ry: rotY },
+                cx: 0, cy: 0, cz: -2600, rx: 0, ry: 0, duration: 1500, easing: 'easeOutQuad',
+                update: (anim) => { 
+                    camX = anim.animations[0].currentValue; camY = anim.animations[1].currentValue; camZ = anim.animations[2].currentValue; 
+                    rotX = anim.animations[3].currentValue; rotY = anim.animations[4].currentValue; cameraNeedsUpdate = true; 
+                }
+            });
+        }
+
+        document.addEventListener('mousedown', e => {
+            if (e.target.closest('#modal-overlay') || e.target.closest('#dropdownWrapper') || e.target.closest('#hamburgerBtn')) return;
+            if (e.button === 0) isRotating = true; if (e.button === 2) isPanning = true; prevX = e.clientX; prevY = e.clientY;
+        });
+        document.addEventListener('mousemove', e => {
+            if (!isRotating && !isPanning) return;
+            const dX = e.clientX - prevX, dY = e.clientY - prevY;
+            if (isRotating) { rotY += dX * 0.3; rotX -= dY * 0.3; rotX = Math.max(-90, Math.min(90, rotX)); }
+            else if (isPanning) { camX += dX * 2.5; camY += dY * 2.5; }
+            cameraNeedsUpdate = true; prevX = e.clientX; prevY = e.clientY;
+        });
+        document.addEventListener('mouseup', () => { isRotating = false; isPanning = false; });
+        document.addEventListener('wheel', e => { camZ = Math.max(-6000, Math.min(-500, camZ - e.deltaY * 2)); cameraNeedsUpdate = true; });
+
+        function getPinch(touches) { return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY); }
+        document.addEventListener('touchstart', e => {
+            if (e.target.closest('#modal-overlay') || e.target.closest('#dropdownWrapper') || e.target.closest('#hamburgerBtn')) return;
+            if (e.touches.length === 1) { isRotating = true; isPanning = false; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; }
+            else if (e.touches.length === 2) { isRotating = false; isPanning = true; prevPinch = getPinch(e.touches); prevX = (e.touches[0].clientX + e.touches[1].clientX) / 2; prevY = (e.touches[0].clientY + e.touches[1].clientY) / 2; }
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', e => {
+            if (e.target.closest('#modal-overlay') || e.target.closest('#dropdownWrapper') || e.target.closest('#hamburgerBtn')) return;
+            e.preventDefault();
+            if (isRotating && e.touches.length === 1) {
+                const dX = e.touches[0].clientX - prevX, dY = e.touches[0].clientY - prevY;
+                rotY += dX * 0.4; rotX = Math.max(-90, Math.min(90, rotX - dY * 0.4)); prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+            } else if (isPanning && e.touches.length === 2) {
+                const curPinch = getPinch(e.touches); camZ = Math.max(-6000, Math.min(-500, camZ + (curPinch - prevPinch) * 5)); prevPinch = curPinch;
+                const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2, midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                camX += (midX - prevX) * 2.5; camY += (midY - prevY) * 2.5; prevX = midX; prevY = midY;
+            }
+            cameraNeedsUpdate = true;
+        }, { passive: false });
+        document.addEventListener('touchend', () => { isRotating = false; isPanning = false; });
+        
+        const userSysLang = navigator.language || navigator.userLanguage;
+        const defaultLang = userSysLang.toLowerCase().includes('id') ? 'ID' : 'EN';
+        
+        setLang(defaultLang);
+        transformTo('table');
+    </script>
+</body>
+</html>
