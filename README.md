@@ -1,3 +1,8 @@
+# 🌐 Interactive 3D Periodic Table
+
+An advanced interactive **3D periodic table** featuring multiple spatial layouts, smooth staggered animations, and real-time bilingual switching — all packed into a **single HTML file** with zero build tools and zero frameworks.
+
+---
 
 ## ✨ Key Features
 
