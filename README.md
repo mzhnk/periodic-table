@@ -309,8 +309,8 @@ All loaded via CDN — no local installation required:
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [https://github.com/your-username](https://github.com/your-username)
-- Live Demo: [https://your-project.vercel.app](https://your-project.vercel.app)
+- GitHub: [https://github.com/mzhnk](https://github.com/mzhnk)
+- Live Demo: [https://periodic-table-zk.vercel.app](https://periodic-table-zk.vercel.app)
 
 ---
 
