@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>3D Periodic Table</title>
+
+    <!-- Fonts / icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Share+Tech+Mono&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css">
+
+    <!-- Project stylesheet -->
+    <link rel="stylesheet" href="css/main.css">
+
+    <!-- Anime.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- Backdrop dim layer -->
+    <div class="backdrop" id="backdrop"></div>
+
+    <!-- Hamburger -->
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+
+    <!-- Dropdown menu -->
+    <div class="dropdown-wrapper" id="dropdownWrapper">
+        <div class="dropdown-panel">
+            <div class="close-row">
+                <button class="close-btn" id="closeBtn" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="divider d1"></div>
+            <div class="section-label sl1" id="lbl-layout">Layout</div>
+
+            <div class="layout-items">
+                <div class="layout-item selected" data-layout="table">
+                    <span class="item-icon"><i class="fa-solid fa-table-cells"></i></span>
+                    <span class="item-name" id="lbl-table">Table</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="sphere">
+                    <span class="item-icon"><i class="fa-solid fa-globe"></i></span>
+                    <span class="item-name" id="lbl-sphere">Sphere</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="helix">
+                    <span class="item-icon"><i class="fa-solid fa-dna"></i></span>
+                    <span class="item-name" id="lbl-helix">Helix</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="grid">
+                    <span class="item-icon"><i class="fa-solid fa-grip"></i></span>
+                    <span class="item-name" id="lbl-grid">Grid</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+            </div>
+
+            <div class="divider d2"></div>
+            <div class="section-label sl2" id="lbl-lang">Language</div>
+
+            <div class="lang-section">
+                <div class="lang-toggle" id="langToggle">
+                    <button class="lang-btn" data-lang="EN">EN</button>
+                    <button class="lang-btn" data-lang="ID">ID</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helper hint -->
+    <div class="helper-text" id="helper-txt">
+        <div class="main-hlp">
+            <i class="fa-regular fa-hand-pointer"></i>
+            <span>HOLD 0.5s</span> on element for details
+        </div>
+    </div>
+
+    <!-- 3D scene hierarchy -->
+    <div id="scene">
+        <div id="scene-camera">
+            <div id="scene-rotator">
+                <div id="scene-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Element detail modal -->
+    <div id="modal-overlay">
+        <div class="modal-card" id="modal-card" style="--modal-color: 255,255,255;">
+            <button class="modal-close-btn" id="modalCloseBtn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-header">
+                <div class="modal-symbol" id="m-sym">Al</div>
+                <div class="modal-number" id="m-num">13</div>
+            </div>
+            <div class="modal-name" id="m-name">Aluminium</div>
+            <div class="modal-stat">
+                <span id="lbl-mass" style="opacity:0.7">Atomic Mass:</span>
+                <span id="m-mass" style="font-weight:600"></span>
+            </div>
+            <div class="modal-stat">
+                <span id="lbl-den" style="opacity:0.7">Density:</span>
+                <span id="m-den" style="font-weight:600"></span>
+            </div>
+            <div class="modal-stat">
+                <span id="lbl-melt" style="opacity:0.7">Melting Point:</span>
+                <span id="m-melt" style="font-weight:600"></span>
+            </div>
+            <div class="modal-stat">
+                <span id="lbl-boil" style="opacity:0.7">Boiling Point:</span>
+                <span id="m-boil" style="font-weight:600"></span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

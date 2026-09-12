@@ -1,0 +1,171 @@
+export const elementsData = [
+    'H', 'Hydrogen', 'Hidrogen', 0, 1, 1, '1.008 u', '0.089 g/l', '-259.16 °C', '-252.88 °C',
+    'He', 'Helium', 'Helium', 1, 18, 1, '4.0026 u', '0.178 g/l', '-272.2 °C', '-268.93 °C',
+    'Li', 'Lithium', 'Litium', 2, 1, 2, '6.94 u', '0.534 g/cm³', '180.5 °C', '1329.85 °C',
+    'Be', 'Beryllium', 'Berilium', 3, 2, 2, '9.012 u', '1.85 g/cm³', '1286.85 °C', '2468.85 °C',
+    'B', 'Boron', 'Boron', 4, 13, 2, '10.81 u', '2.08 g/cm³', '2075.85 °C', '3926.85 °C',
+    'C', 'Carbon', 'Karbon', 0, 14, 2, '12.011 u', '1.821 g/cm³', 'Menyublim', 'Menyublim',
+    'N', 'Nitrogen', 'Nitrogen', 0, 15, 2, '14.007 u', '1.251 g/l', '-210 °C', '-195.79 °C',
+    'O', 'Oxygen', 'Oksigen', 0, 16, 2, '15.999 u', '1.429 g/l', '-218.79 °C', '-182.96 °C',
+    'F', 'Fluorine', 'Fluor', 5, 17, 2, '18.998 u', '1.696 g/l', '-219.67 °C', '-188.12 °C',
+    'Ne', 'Neon', 'Neon', 1, 18, 2, '20.179 u', '0.900 g/l', '-248.59 °C', '-246.05 °C',
+    'Na', 'Sodium', 'Natrium', 2, 1, 3, '22.989 u', '0.968 g/cm³', '97.79 °C', '882.94 °C',
+    'Mg', 'Magnesium', 'Magnesium', 3, 2, 3, '24.305 u', '1.738 g/cm³', '649.85 °C', '1089.85 °C',
+    'Al', 'Aluminium', 'Aluminium', 6, 13, 3, '26.981 u', '2.7 g/cm³', '660.32 °C', '2469.85 °C',
+    'Si', 'Silicon', 'Silikon', 4, 14, 3, '28.085 u', '2.329 g/cm³', '1413.85 °C', '3264.85 °C',
+    'P', 'Phosphorus', 'Fosfor', 0, 15, 3, '30.973 u', '1.823 g/cm³', '44.1 °C', '280.5 °C',
+    'S', 'Sulfur', 'Belerang', 0, 16, 3, '32.06 u', '2.07 g/cm³', '115.21 °C', '444.65 °C',
+    'Cl', 'Chlorine', 'Klorin', 5, 17, 3, '35.45 u', '3.2 g/l', '-101.55 °C', '-34.04 °C',
+    'Ar', 'Argon', 'Argon', 1, 18, 3, '39.948 u', '1.784 g/l', '-189.34 °C', '-185.85 °C',
+    'K', 'Potassium', 'Kalium', 2, 1, 4, '39.098 u', '0.862 g/cm³', '63.55 °C', '758.85 °C',
+    'Ca', 'Calcium', 'Kalsium', 3, 2, 4, '40.078 u', '1.55 g/cm³', '841.85 °C', '1483.85 °C',
+    'Sc', 'Scandium', 'Skandium', 7, 3, 4, '44.955 u', '2.985 g/cm³', '1540.85 °C', '2835.85 °C',
+    'Ti', 'Titanium', 'Titanium', 7, 4, 4, '47.867 u', '4.506 g/cm³', '1667.85 °C', '3286.85 °C',
+    'V', 'Vanadium', 'Vanadium', 7, 5, 4, '50.941 u', '6.0 g/cm³', '1909.85 °C', '3406.85 °C',
+    'Cr', 'Chromium', 'Kromium', 7, 6, 4, '51.996 u', '7.19 g/cm³', '1906.85 °C', '2670.85 °C',
+    'Mn', 'Manganese', 'Mangan', 7, 7, 4, '54.938 u', '7.21 g/cm³', '1245.85 °C', '2060.85 °C',
+    'Fe', 'Iron', 'Besi', 7, 8, 4, '55.845 u', '7.874 g/cm³', '1537.85 °C', '2860.85 °C',
+    'Co', 'Cobalt', 'Kobalt', 7, 9, 4, '58.933 u', '8.9 g/cm³', '1494.85 °C', '2926.85 °C',
+    'Ni', 'Nickel', 'Nikel', 7, 10, 4, '58.693 u', '8.908 g/cm³', '1454.85 °C', '2729.85 °C',
+    'Cu', 'Copper', 'Tembaga', 7, 11, 4, '63.546 u', '8.96 g/cm³', '1084.62 °C', '2561.85 °C',
+    'Zn', 'Zinc', 'Seng', 7, 12, 4, '65.38 u', '7.14 g/cm³', '419.53 °C', '907 °C',
+    'Ga', 'Gallium', 'Galium', 6, 13, 4, '69.723 u', '5.91 g/cm³', '29.76 °C', '2204 °C',
+    'Ge', 'Germanium', 'Germanium', 4, 14, 4, '72.630 u', '5.323 g/cm³', '938.25 °C', '2833 °C',
+    'As', 'Arsenic', 'Arsenik', 4, 15, 4, '74.921 u', '5.727 g/cm³', '817 °C', '614 °C',
+    'Se', 'Selenium', 'Selenium', 0, 16, 4, '78.971 u', '4.81 g/cm³', '221 °C', '685 °C',
+    'Br', 'Bromine', 'Bromin', 5, 17, 4, '79.904 u', '3.12 g/cm³', '-7.2 °C', '58.8 °C',
+    'Kr', 'Krypton', 'Kripton', 1, 18, 4, '83.798 u', '3.75 g/l', '-157.36 °C', '-153.22 °C',
+    'Rb', 'Rubidium', 'Rubidium', 2, 1, 5, '85.467 u', '1.532 g/cm³', '39.3 °C', '688 °C',
+    'Sr', 'Strontium', 'Stronsium', 3, 2, 5, '87.62 u', '2.63 g/cm³', '777 °C', '1382 °C',
+    'Y', 'Yttrium', 'Itrium', 7, 3, 5, '88.905 u', '4.47 g/cm³', '1522 °C', '3338 °C',
+    'Zr', 'Zirconium', 'Zirkonium', 7, 4, 5, '91.224 u', '6.52 g/cm³', '1855 °C', '4409 °C',
+    'Nb', 'Niobium', 'Niobium', 7, 5, 5, '92.906 u', '8.57 g/cm³', '2477 °C', '4744 °C',
+    'Mo', 'Molybdenum', 'Molibdenum', 7, 6, 5, '95.95 u', '10.28 g/cm³', '2623 °C', '4639 °C',
+    'Tc', 'Technetium', 'Teknesium', 7, 7, 5, '98 u', '11.5 g/cm³', '2157 °C', '4265 °C',
+    'Ru', 'Ruthenium', 'Rutenium', 7, 8, 5, '101.07 u', '12.37 g/cm³', '2334 °C', '4150 °C',
+    'Rh', 'Rhodium', 'Rodium', 7, 9, 5, '102.91 u', '12.45 g/cm³', '1964 °C', '3695 °C',
+    'Pd', 'Palladium', 'Paladium', 7, 10, 5, '106.42 u', '12.02 g/cm³', '1554.9 °C', '2963 °C',
+    'Ag', 'Silver', 'Perak', 7, 11, 5, '107.86 u', '10.49 g/cm³', '961.78 °C', '2162 °C',
+    'Cd', 'Cadmium', 'Kadmium', 7, 12, 5, '112.41 u', '8.65 g/cm³', '321.07 °C', '767 °C',
+    'In', 'Indium', 'Indium', 6, 13, 5, '114.81 u', '7.31 g/cm³', '156.6 °C', '2072 °C',
+    'Sn', 'Tin', 'Timah', 6, 14, 5, '118.71 u', '7.287 g/cm³', '231.93 °C', '2602 °C',
+    'Sb', 'Antimony', 'Antimon', 4, 15, 5, '121.76 u', '6.697 g/cm³', '630.63 °C', '1587 °C',
+    'Te', 'Tellurium', 'Telurium', 4, 16, 5, '127.6 u', '6.24 g/cm³', '449.51 °C', '988 °C',
+    'I', 'Iodine', 'Yodium', 5, 17, 5, '126.9 u', '4.93 g/cm³', '113.7 °C', '184.3 °C',
+    'Xe', 'Xenon', 'Xenon', 1, 18, 5, '131.29 u', '5.89 g/l', '-111.7 °C', '-108.12 °C',
+    'Cs', 'Caesium', 'Sesium', 2, 1, 6, '132.9 u', '1.93 g/cm³', '28.5 °C', '671 °C',
+    'Ba', 'Barium', 'Barium', 3, 2, 6, '137.32 u', '3.51 g/cm³', '727 °C', '1897 °C',
+    'La', 'Lanthanum', 'Lantanum', 8, 3, 6, '138.9 u', '6.15 g/cm³', '920 °C', '3464 °C',
+    'Ce', 'Cerium', 'Serium', 8, 4, 9, '140.11 u', '6.77 g/cm³', '795 °C', '3443 °C',
+    'Pr', 'Praseodymium', 'Praseodimium', 8, 5, 9, '140.9 u', '6.77 g/cm³', '931 °C', '3520 °C',
+    'Nd', 'Neodymium', 'Neodimium', 8, 6, 9, '144.24 u', '7.01 g/cm³', '1024 °C', '3074 °C',
+    'Pm', 'Promethium', 'Prometium', 8, 7, 9, '145 u', '7.26 g/cm³', '1042 °C', '3000 °C',
+    'Sm', 'Samarium', 'Samarium', 8, 8, 9, '150.36 u', '7.52 g/cm³', '1072 °C', '1794 °C',
+    'Eu', 'Europium', 'Europium', 8, 9, 9, '151.96 u', '5.24 g/cm³', '822 °C', '1529 °C',
+    'Gd', 'Gadolinium', 'Gadolinium', 8, 10, 9, '157.25 u', '7.9 g/cm³', '1312 °C', '3273 °C',
+    'Tb', 'Terbium', 'Terbium', 8, 11, 9, '158.92 u', '8.23 g/cm³', '1356 °C', '3230 °C',
+    'Dy', 'Dysprosium', 'Disprosium', 8, 12, 9, '162.5 u', '8.54 g/cm³', '1407 °C', '2562 °C',
+    'Ho', 'Holmium', 'Holmium', 8, 13, 9, '164.93 u', '8.8 g/cm³', '1470 °C', '2720 °C',
+    'Er', 'Erbium', 'Erbium', 8, 14, 9, '167.25 u', '9.07 g/cm³', '1529 °C', '2868 °C',
+    'Tm', 'Thulium', 'Tulium', 8, 15, 9, '168.93 u', '9.32 g/cm³', '1545 °C', '1950 °C',
+    'Yb', 'Ytterbium', 'Iterbium', 8, 16, 9, '173.05 u', '6.9 g/cm³', '824 °C', '1196 °C',
+    'Lu', 'Lutetium', 'Lutesium', 8, 17, 9, '174.96 u', '9.84 g/cm³', '1652 °C', '3402 °C',
+    'Hf', 'Hafnium', 'Hafnium', 7, 4, 6, '178.49 u', '13.31 g/cm³', '2233 °C', '4603 °C',
+    'Ta', 'Tantalum', 'Tantalum', 7, 5, 6, '180.94 u', '16.69 g/cm³', '3017 °C', '5458 °C',
+    'W', 'Tungsten', 'Wolfram', 7, 6, 6, '183.84 u', '19.25 g/cm³', '3422 °C', '5555 °C',
+    'Re', 'Rhenium', 'Renium', 7, 7, 6, '186.2 u', '21.02 g/cm³', '3186 °C', '5596 °C',
+    'Os', 'Osmium', 'Osmium', 7, 8, 6, '190.23 u', '22.59 g/cm³', '3033 °C', '5012 °C',
+    'Ir', 'Iridium', 'Iridium', 7, 9, 6, '192.21 u', '22.56 g/cm³', '2446 °C', '4428 °C',
+    'Pt', 'Platinum', 'Platina', 7, 10, 6, '195.08 u', '21.45 g/cm³', '1768.3 °C', '3825 °C',
+    'Au', 'Gold', 'Emas', 7, 11, 6, '196.96 u', '19.3 g/cm³', '1064.18 °C', '2856 °C',
+    'Hg', 'Mercury', 'Raksa', 7, 12, 6, '200.59 u', '13.534 g/cm³', '-38.83 °C', '356.73 °C',
+    'Tl', 'Thallium', 'Talium', 6, 13, 6, '204.38 u', '11.85 g/cm³', '304 °C', '1473 °C',
+    'Pb', 'Lead', 'Timbal', 6, 14, 6, '207.2 u', '11.34 g/cm³', '327.46 °C', '1749 °C',
+    'Bi', 'Bismuth', 'Bismut', 6, 15, 6, '208.98 u', '9.78 g/cm³', '271.3 °C', '1564 °C',
+    'Po', 'Polonium', 'Polonium', 4, 16, 6, '209 u', '9.196 g/cm³', '254 °C', '962 °C',
+    'At', 'Astatine', 'Astatin', 5, 17, 6, '210 u', 'N/A', '302 °C', '337 °C',
+    'Rn', 'Radon', 'Radon', 1, 18, 6, '222 u', '9.73 g/l', '-71 °C', '-61.7 °C',
+    'Fr', 'Francium', 'Fransium', 2, 1, 7, '223 u', 'N/A', '27 °C', '677 °C',
+    'Ra', 'Radium', 'Radium', 3, 2, 7, '226 u', '5.5 g/cm³', '700 °C', '1737 °C',
+    'Ac', 'Actinium', 'Aktinium', 9, 3, 7, '227 u', '10.07 g/cm³', '1050 °C', '3198 °C',
+    'Th', 'Thorium', 'Torium', 9, 4, 10, '232.03 u', '11.72 g/cm³', '1750 °C', '4788 °C',
+    'Pa', 'Protactinium', 'Protaktinium', 9, 5, 10, '231.03 u', '15.37 g/cm³', '1568 °C', '4027 °C',
+    'U', 'Uranium', 'Uranium', 9, 6, 10, '238.02 u', '19.1 g/cm³', '1132.2 °C', '4131 °C',
+    'Np', 'Neptunium', 'Neptunium', 9, 7, 10, '237 u', '20.25 g/cm³', '639 °C', '3902 °C',
+    'Pu', 'Plutonium', 'Plutonium', 9, 8, 10, '244 u', '19.816 g/cm³', '639.4 °C', '3228 °C',
+    'Am', 'Americium', 'Amerisium', 9, 9, 10, '243 u', '13.67 g/cm³', '1176 °C', '2607 °C',
+    'Cm', 'Curium', 'Kurium', 9, 10, 10, '247 u', '13.51 g/cm³', '1340 °C', '3110 °C',
+    'Bk', 'Berkelium', 'Berkelium', 9, 11, 10, '247 u', '14.78 g/cm³', '986 °C', '2627 °C',
+    'Cf', 'Californium', 'Kalifornium', 9, 12, 10, '251 u', '15.1 g/cm³', '900 °C', '1470 °C',
+    'Es', 'Einsteinium', 'Einsteinium', 9, 13, 10, '252 u', '8.84 g/cm³', '860 °C', '996 °C',
+    'Fm', 'Fermium', 'Fermium', 9, 14, 10, '257 u', 'N/A', '1527 °C', 'N/A',
+    'Md', 'Mendelevium', 'Mendelevium', 9, 15, 10, '258 u', 'N/A', '827 °C', 'N/A',
+    'No', 'Nobelium', 'Nobelium', 9, 16, 10, '259 u', 'N/A', '827 °C', 'N/A',
+    'Lr', 'Lawrencium', 'Lawrensium', 9, 17, 10, '262 u', 'N/A', '1627 °C', 'N/A',
+    'Rf', 'Rutherfordium', 'Ruterfordium', 7, 4, 7, '267 u', 'N/A', 'N/A', 'N/A',
+    'Db', 'Dubnium', 'Dubnium', 7, 5, 7, '268 u', 'N/A', 'N/A', 'N/A',
+    'Sg', 'Seaborgium', 'Seaborgium', 7, 6, 7, '269 u', 'N/A', 'N/A', 'N/A',
+    'Bh', 'Bohrium', 'Borium', 7, 7, 7, '270 u', 'N/A', 'N/A', 'N/A',
+    'Hs', 'Hassium', 'Hasium', 7, 8, 7, '277 u', 'N/A', 'N/A', 'N/A',
+    'Mt', 'Meitnerium', 'Meitnerium', 7, 9, 7, '278 u', 'N/A', 'N/A', 'N/A',
+    'Ds', 'Darmstadtium', 'Darmstadtium', 7, 10, 7, '281 u', 'N/A', 'N/A', 'N/A',
+    'Rg', 'Roentgenium', 'Rontgenium', 7, 11, 7, '282 u', 'N/A', 'N/A', 'N/A',
+    'Cn', 'Copernicium', 'Kopernisium', 7, 12, 7, '285 u', 'N/A', 'N/A', 'N/A',
+    'Nh', 'Nihonium', 'Nihonium', 6, 13, 7, '286 u', 'N/A', 'N/A', 'N/A',
+    'Fl', 'Flerovium', 'Flerovium', 6, 14, 7, '289 u', 'N/A', 'N/A', 'N/A',
+    'Mc', 'Moscovium', 'Moskovium', 6, 15, 7, '290 u', 'N/A', 'N/A', 'N/A',
+    'Lv', 'Livermorium', 'Livermorium', 6, 16, 7, '293 u', 'N/A', 'N/A', 'N/A',
+    'Ts', 'Tennessine', 'Tenesin', 5, 17, 7, '294 u', 'N/A', 'N/A', 'N/A',
+    'Og', 'Oganesson', 'Oganeson', 1, 18, 7, '294 u', 'N/A', 'N/A', 'N/A'
+];
+
+/* Field-offset constants */
+export const STRIDE = 10;
+export const FIELD = Object.freeze({
+    symbol:        0,
+    nameEN:        1,
+    nameID:        2,
+    category:      3,
+    column:        4,
+    row:           5,
+    mass:          6,
+    density:       7,
+    meltingPoint:  8,
+    boilingPoint:  9
+});
+
+export const TOTAL_ELEMENTS = elementsData.length / STRIDE;
+
+/**
+ * @param {number} index  Zero-based element index (0..117). Same as atomic number - 1.
+ * @returns {{symbol:string,nameEN:string,nameID:string,category:number,column:number,row:number,mass:string,density:string,meltingPoint:string,boilingPoint:string,atomicNumber:number}}
+ */
+export function getElement(index) {
+    if (index < 0 || index >= TOTAL_ELEMENTS) {
+        throw new RangeError(`Element index out of range: ${index} (0..${TOTAL_ELEMENTS - 1})`);
+    }
+    const base = index * STRIDE;
+    return {
+        symbol:        elementsData[base + FIELD.symbol],
+        nameEN:        elementsData[base + FIELD.nameEN],
+        nameID:        elementsData[base + FIELD.nameID],
+        category:      elementsData[base + FIELD.category],
+        column:        elementsData[base + FIELD.column],
+        row:           elementsData[base + FIELD.row],
+        mass:          elementsData[base + FIELD.mass],
+        density:       elementsData[base + FIELD.density],
+        meltingPoint:  elementsData[base + FIELD.meltingPoint],
+        boilingPoint:  elementsData[base + FIELD.boilingPoint],
+        atomicNumber:  index + 1
+    };
+}
+
+/* Sanity check at module load */
+console.assert(
+    elementsData.length === 1180,
+    `[elements.js] Dataset length mismatch: expected 1180, got ${elementsData.length}`
+);
+console.assert(
+    TOTAL_ELEMENTS === 118,
+    `[elements.js] TOTAL_ELEMENTS mismatch: expected 118, got ${TOTAL_ELEMENTS}`
+);

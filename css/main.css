@@ -1,0 +1,67 @@
+@import url('variables.css');
+@import url('menu.css');
+@import url('periodic-table.css');
+@import url('modal.css');
+@import url('responsive.css');
+
+/* --- Base --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg);
+    background-image: radial-gradient(circle at center, #11141d 0%, #07080D 100%);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    perspective: 1200px;
+    cursor: grab;
+    -webkit-touch-callout: none;
+    touch-action: none;
+}
+
+body:active { cursor: grabbing; }
+
+/* --- Helper text --- */
+.helper-text {
+    position: fixed;
+    bottom: max(25px, calc(25px + env(safe-area-inset-bottom)));
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 90vw;
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    font-family: 'Outfit', sans-serif;
+    background: rgba(13,15,23,0.75);
+    padding: 8px 20px;
+    border-radius: 20px;
+    pointer-events: none;
+    border: 1px solid var(--border);
+    text-align: center;
+    backdrop-filter: blur(8px);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    transition: opacity 0.3s;
+}
+.helper-text .main-hlp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.helper-text span {
+    color: var(--neon);
+    font-weight: 600;
+    text-shadow: 0 0 8px var(--neon-glow);
+}
