@@ -1,319 +1,602 @@
-# 🌐 Interactive 3D Periodic Table
+# 3D Periodic Table
 
-An advanced interactive **3D periodic table** featuring multiple spatial layouts, smooth staggered animations, and real-time bilingual switching — all packed into a **single HTML file** with zero build tools and zero frameworks.
+An interactive, browser-based 3D periodic table built with **HTML, CSS, and vanilla JavaScript**. The application presents all **118 chemical elements** as interactive 3D cards and allows users to switch between multiple spatial layouts, inspect element properties, and change the interface language between English and Indonesian.
 
----
+> **Current scope:** This README documents the implementation contained in this project. It does not assume features that are not currently present in the source code.
 
-## ✨ Key Features
+## Overview
 
-### 🧪 Complete Element Dataset
-- **118 chemical elements** (Hydrogen → Oganesson)
-- Each element stores **10 data fields** via the STRIDE-10 system:
-  ```
-  [symbol, nameEN, nameID, category, column, row, atomicMass, density, meltingPoint, boilingPoint]
-  ```
-- Dual language support: 🇬🇧 **English** / 🇮🇩 **Indonesian**
-- Auto-detects browser language on load (`navigator.language`) — Indonesian users get `ID` by default
+The project was originally implemented as a single HTML file and has been reorganized into a modular front-end structure. The current architecture separates:
 
----
+- application entry point,
+- element data,
+- 3D scene and camera logic,
+- UI components,
+- interaction features,
+- language handling,
+- layout switching,
+- and CSS by responsibility.
 
-## 🎯 3D Layout System
+The result is a lightweight single-page application that can run directly in a modern browser without a backend or build step.
 
-Switch between **4 spatial representations**, all animated with staggered transitions:
+## Features
 
-| Layout | Icon | Algorithm |
-|--------|------|-----------|
-| **Table** | 📊 | Standard periodic table grid (col × row × spacing) |
-| **Sphere** | 🌍 | Fibonacci sphere distribution |
-| **Helix** | 🧬 | Logarithmic spiral structure |
-| **Grid** | 🔲 | 3D layered 5×5×N grid |
+### 3D Periodic Table
 
-### 🧮 Layout Math Details
+The application renders **118 elements** from Hydrogen (`H`) to Oganesson (`Og`). Each element is represented as a 3D card with:
 
-**📊 Table**
-```js
-x = (col - 9.5) * 150
-y = (row - 5.5) * 190
-z = 0
+- atomic number,
+- chemical symbol,
+- element name,
+- category-based color styling.
+
+The element dataset is stored separately in `js/data/elements.js`.
+
+### Multiple 3D Layouts
+
+The same 118 elements can be arranged using four layouts:
+
+| Layout | Description |
+|---|---|
+| **Table** | Positions elements according to their configured period/column coordinates. |
+| **Sphere** | Distributes elements across a spherical 3D arrangement. |
+| **Helix** | Places elements along a spiral/helix path. |
+| **Grid** | Places elements into a multi-layer 3D grid. |
+
+Layout transitions are animated with **Anime.js**.
+
+### Element Detail Modal
+
+Hold an element for approximately **0.5 seconds** to open its detail modal.
+
+The modal displays:
+
+- atomic number,
+- symbol,
+- element name,
+- atomic mass,
+- density,
+- melting point,
+- boiling point.
+
+The displayed element name follows the currently selected interface language.
+
+### English / Indonesian UI
+
+The interface supports:
+
+- **EN — English**
+- **ID — Bahasa Indonesia**
+
+Language switching updates menu labels, helper text, modal labels, and element names.
+
+The initial language is detected from the browser locale. Indonesian browser locales default to `ID`; other locales default to `EN`.
+
+### Mouse Interaction
+
+On desktop, the 3D scene supports:
+
+| Action | Input |
+|---|---|
+| Rotate | Left mouse button + drag |
+| Pan | Right mouse button + drag |
+| Zoom | Mouse wheel |
+| Open element details | Hold an element for ~0.5 s |
+
+### Touch Interaction
+
+On touch devices, the application supports:
+
+| Action | Input |
+|---|---|
+| Rotate | One-finger drag |
+| Pan + zoom | Two-finger gesture |
+| Element detail | Hold an element for ~0.5 s |
+
+The implementation cancels a long-press when the pointer moves beyond a small drift threshold so normal dragging does not accidentally open the element modal.
+
+### Responsive UI
+
+The project includes dedicated responsive CSS for small screens and touch devices, including safe-area handling for modern mobile devices.
+
+### Dark / Neon Visual Design
+
+The UI uses a dark, neon-inspired visual language with:
+
+- glassmorphism-style panels,
+- blurred backdrops,
+- cyan accent lighting,
+- element-specific glow colors,
+- animated menu transitions,
+- custom typography.
+
+## Tech Stack
+
+### Core
+
+- **HTML5**
+- **CSS3**
+- **JavaScript (ES Modules)**
+
+### External Libraries / Assets
+
+The project currently loads the following resources from CDNs:
+
+- **Anime.js 3.2.1** — layout and camera animations.
+- **Font Awesome 7.2.0** — interface icons.
+- **Google Fonts**:
+  - Outfit
+  - JetBrains Mono
+  - Share Tech Mono
+
+No framework such as React, Vue, Angular, or Svelte is used.
+
+## Project Structure
+
+```text
+periodic-table/
+│
+├── index.html
+├── README.md
+│
+├── css/
+│   ├── main.css
+│   ├── variables.css
+│   ├── menu.css
+│   ├── periodic-table.css
+│   ├── modal.css
+│   └── responsive.css
+│
+└── js/
+    ├── main.js
+    │
+    ├── data/
+    │   └── elements.js
+    │
+    ├── core/
+    │   ├── scene.js
+    │   ├── camera.js
+    │   └── layouts.js
+    │
+    ├── components/
+    │   ├── element-card.js
+    │   ├── menu.js
+    │   └── modal.js
+    │
+    ├── features/
+    │   ├── interaction.js
+    │   ├── language.js
+    │   └── layout-switcher.js
+    │
+    └── utils/
+        └── helpers.js
 ```
 
-**🌍 Sphere** — Fibonacci sphere (radius: 1100)
-```js
-phi   = acos(-1 + (2 * i) / total)
-theta = sqrt(total * PI) * phi
+## Architecture
 
-x = radius * cos(theta) * sin(phi)
-y = radius * cos(phi)
-z = radius * sin(theta) * sin(phi)
-// Each card also faces outward using atan2 rotation
-```
+The application follows a lightweight modular architecture built around ES Modules.
 
-**🧬 Helix** — Logarithmic spiral (radius: 1000)
-```js
-theta = i * 0.175 + PI
-
-x = 1000 * sin(theta)
-y = -(i * 10) + 500
-z = 1000 * cos(theta)
-ry = theta  // card faces tangent to spiral
-```
-
-**🔲 Grid** — 3D layered grid (5×5 per layer)
-```js
-x = (i % 5) * 400 - 800
-y = -(floor(i / 5) % 5) * 400 + 800
-z = floor(i / 25) * 1000 - 2000
-```
-
----
-
-## 🖱️ Interaction System
-
-### Mouse Controls
-| Action | Effect |
-|--------|--------|
-| Left drag | Rotate scene (rotX / rotY) |
-| Right drag | Pan camera (camX / camY) |
-| Scroll wheel | Zoom (camZ: `-500` → `-6000`) |
-| Hold 0.5s on element | Open element detail modal |
-
-### Touch Controls (Mobile-Optimized)
-| Gesture | Effect |
-|---------|--------|
-| 1-finger drag | Rotate scene |
-| 2-finger pinch | Zoom in/out |
-| 2-finger drag | Pan camera |
-| Long press 0.5s | Open element detail modal |
-
-> Movement threshold of **5px** cancels long-press to prevent accidental modal triggers while rotating.
-
----
-
-## 🎨 UI Design System
-
-### Color Palette (CSS Variables)
-```css
---bg:        #07080D   /* deep space background */
---surface:   #0D0F17   /* panel base */
---surface-2: #131622   /* secondary surfaces */
---surface-3: #1A1E2E   /* tertiary / toggle track */
---neon:      #00E0FF   /* primary neon accent */
---text:      #DDE3F0   /* primary text */
---text-2:    #6E7890   /* secondary/muted text */
-```
-
-### Element Category Colors (RGB format for alpha blending)
-```css
---c-0: 255,  60,  60   /* Nonmetal       → Red      */
---c-1:  60, 255, 255   /* Noble Gas      → Cyan     */
---c-2: 255, 165,   0   /* Alkali Metal   → Orange   */
---c-3: 255, 220,   0   /* Alkaline Earth → Yellow   */
---c-4: 150, 255,  60   /* Metalloid      → Lime     */
---c-5:   0, 191, 255   /* Halogen        → Sky Blue */
---c-6: 255, 105, 180   /* Post-transition→ Pink     */
---c-7:  60, 200, 100   /* Transition     → Green    */
---c-8: 144, 238, 144   /* Lanthanide     → L. Green */
---c-9: 221, 160, 221   /* Actinide       → Plum     */
-```
-Colors are applied dynamically to: card borders, hover glow, and modal theme via `--modal-color`.
-
-### Typography Stack
-| Font | Usage |
-|------|-------|
-| `Share Tech Mono` | Element symbols and numbers (3D cards) |
-| `Outfit` | UI panels, dropdown, modal content |
-| `JetBrains Mono` | Section labels, language toggle |
-
-### UI Components
-- **Glassmorphism dropdown panel** — `backdrop-filter: blur(28px)` with neon top-border gradient
-- **Animated hamburger button** — 3-bar icon with neon glow state when active
-- **Language toggle pill** — sliding indicator with spring animation
-- **Element detail modal** — glassmorphism overlay, category-colored theme, atomic data display
-- **Helper text badge** — bottom-centered floating hint (language-reactive)
-- **Backdrop overlay** — blurred dark scrim behind dropdown (click to dismiss)
-
----
-
-## 🌍 Language Switching
-
-Real-time UI translation — **no page reload**. Updates simultaneously:
-
-| Target | EN | ID |
-|--------|----|----|
-| Layout labels | `LAYOUT`, `Table`, `Sphere`... | `TATA LETAK`, `Tabel`, `Bola`... |
-| Language section label | `LANGUAGE` | `BAHASA` |
-| Helper text | `HOLD 0.5s on element for details` | `TAHAN 0.5s di unsur untuk detail` |
-| Modal property labels | `Atomic Mass`, `Density`... | `Massa Atom`, `Massa Jenis`... |
-| All 118 element names (on cards) | English | Indonesian |
-
----
-
-## 🧠 Technical Architecture
-
-### 📦 Single-File System
-```
+```text
 index.html
-├── <head>
-│   ├── Google Fonts (Outfit, JetBrains Mono, Share Tech Mono)
-│   ├── FontAwesome 7.2.0 (icon library)
-│   └── Anime.js 3.2.1 (animation engine)
-├── <style>   — Full CSS (UI system + 3D engine)
-├── <body>    — HTML structure (hamburger, dropdown, scene, modal)
-└── <script>  — All JS (data, logic, 3D engine, interactions)
+    │
+    ▼
+main.js
+    │
+    ├── data/elements.js
+    │
+    ├── components/
+    │   ├── element-card.js
+    │   ├── menu.js
+    │   └── modal.js
+    │
+    ├── core/
+    │   ├── scene.js
+    │   ├── camera.js
+    │   └── layouts.js
+    │
+    ├── features/
+    │   ├── interaction.js
+    │   ├── language.js
+    │   └── layout-switcher.js
+    │
+    └── utils/helpers.js
 ```
 
-### 🌐 3D Engine (Pure CSS + JS — No WebGL)
-```
-#scene                     [transform-style: preserve-3d]
- └── #scene-camera         [translate3d(camX, camY, camZ)]  ← zoom + pan
-      └── #scene-rotator   [rotateX(rotX) rotateY(rotY)]    ← drag rotation
-           └── #scene-content
-                └── .element × 118   [translate3d(x, y, z) + rotateXYZ]
-```
+### `index.html`
 
-Camera state is driven by **CSS custom properties** updated via `requestAnimationFrame` with a dirty flag (`cameraNeedsUpdate`) to avoid unnecessary repaints.
+Contains the page structure and entry points for external dependencies and the application module. CSS and application JavaScript are loaded externally.
 
-```js
-// Dirty-flag render loop (efficient)
-function renderLoop() {
-    if (cameraNeedsUpdate) {
-        rootStyles.setProperty('--cam-x', `${camX}px`);
-        // ...update other cam vars
-        cameraNeedsUpdate = false;
-    }
-    requestAnimationFrame(renderLoop);
-}
-```
+### `js/main.js`
 
-### ⚡ Animation Engine (Anime.js)
-```js
-anime({
-    targets: elements.map(e => e.current),   // animates JS objects
-    x: (el, i) => layouts[layout][i].x,      // per-element target
-    y: ..., z: ..., rx: ..., ry: ..., rz: ...,
-    duration: 2000,
-    easing: 'easeOutCubic',
-    delay: anime.stagger(12, { easing: 'easeOutQuad' }),  // stagger effect
-    update: () => {
-        // Manually apply transform to DOM each tick
-        el.dom.style.transform = `translate3d(...) rotateY(...) rotateX(...)`;
-    }
-});
+Acts as the application bootstrap layer. It initializes the menu, modal, element cards, language system, layout switcher, and interaction layer.
+
+### `js/data/elements.js`
+
+Contains the full element dataset and the functions/constants used to access it safely.
+
+The data is stored using a fixed record stride:
+
+```text
+Symbol
+English name
+Indonesian name
+Category
+Column
+Row
+Atomic mass
+Density
+Melting point
+Boiling point
 ```
 
-Camera reset on layout change uses a separate `anime()` call animating `camX/Y/Z` and `rotX/Y` back to origin over **1500ms**.
+The module exposes `getElement(index)` so other modules do not need to work directly with array offsets.
 
----
+The source includes internal assertions for the expected dataset size of **118 elements / 1180 values**.
 
-## 🧩 Data Structure (STRIDE-10 System)
+### `js/core/scene.js`
 
-All 118 elements are stored in a flat array. Each element occupies **10 consecutive slots**:
+Owns access to the main 3D scene DOM hierarchy and centralizes element transform application.
 
-```
-Index:  0         1          2         3     4    5     6           7            8              9
-Data:  symbol   nameEN    nameID    cat   col  row  atomicMass  density    meltingPoint  boilingPoint
-```
+Scene hierarchy:
 
-**Example — Hydrogen (index 0):**
-```js
-'H', 'Hydrogen', 'Hidrogen', 0, 1, 1,
-'1.008 u', '0.089 g/l', '-259.16 °C', '-252.88 °C'
-```
-
-**Example — Gold (index 78):**
-```js
-'Au', 'Gold', 'Emas', 7, 11, 6,
-'196.96 u', '19.3 g/cm³', '1064.18 °C', '2856 °C'
+```text
+#scene
+└── #scene-camera
+    └── #scene-rotator
+        └── #scene-content
+            └── .element × 118
 ```
 
-Access pattern:
-```js
-const STRIDE = 10;
-const symbol   = elementsData[i * STRIDE + 0];
-const nameEN   = elementsData[i * STRIDE + 1];
-const category = elementsData[i * STRIDE + 3];
-const mass     = elementsData[i * STRIDE + 6];
-// ...etc
+### `js/core/camera.js`
+
+Maintains camera and rotation state, including:
+
+- X/Y camera panning,
+- Z zoom position,
+- X/Y rotation,
+- zoom limits,
+- vertical rotation limits,
+- animated reset behavior.
+
+Camera state is rendered through CSS custom properties.
+
+### `js/core/layouts.js`
+
+Builds and caches the coordinate arrays used by the four supported layouts:
+
+- Table
+- Sphere
+- Helix
+- Grid
+
+The module also validates that every generated layout contains the expected number of positions.
+
+### `js/components/element-card.js`
+
+Creates an individual element card and manages its long-press behavior.
+
+The component also stores the element's current transform state so layout animations can update it without coupling the card to camera logic.
+
+### `js/components/modal.js`
+
+Handles the element detail modal, including opening, updating content, and closing the overlay.
+
+### `js/components/menu.js`
+
+Controls the hamburger menu, dropdown panel, backdrop, and close behavior.
+
+### `js/features/language.js`
+
+Contains translations for the supported UI strings and synchronizes:
+
+- menu labels,
+- layout names,
+- helper text,
+- modal labels,
+- element names.
+
+### `js/features/layout-switcher.js`
+
+Coordinates selection of the active layout, animates element transforms with Anime.js, and resets the camera after a layout change.
+
+### `js/features/interaction.js`
+
+Handles mouse and touch interaction and converts user gestures into camera operations.
+
+### `js/utils/helpers.js`
+
+Contains shared constants and utility functions, including:
+
+- long-press thresholds,
+- layout dimensions,
+- camera limits,
+- interaction gains,
+- animation timing,
+- clamping,
+- pinch-distance calculation,
+- transform formatting,
+- browser-language detection.
+
+## Data Model
+
+Each element record contains 10 fields in a fixed-size flat array record:
+
+```javascript
+[
+    symbol,
+    nameEN,
+    nameID,
+    category,
+    column,
+    row,
+    mass,
+    density,
+    meltingPoint,
+    boilingPoint
+]
 ```
 
----
+Example:
 
-## 🚀 Getting Started
+```javascript
+[
+    'Al',
+    'Aluminium',
+    'Aluminium',
+    6,
+    13,
+    3,
+    '26.981 u',
+    '2.7 g/cm³',
+    '660.32 °C',
+    '2469.85 °C'
+]
+```
 
-### Zero Installation
+Access should normally be performed through:
+
+```javascript
+const element = getElement(index);
+```
+
+The returned object includes named properties and an `atomicNumber` derived from the zero-based index.
+
+## Element Categories
+
+The dataset uses numeric category identifiers for color classification:
+
+| ID | Category |
+|---:|---|
+| 0 | Nonmetal |
+| 1 | Noble Gas |
+| 2 | Alkali Metal |
+| 3 | Alkaline Earth |
+| 4 | Metalloid |
+| 5 | Halogen |
+| 6 | Post-transition Metal |
+| 7 | Transition Metal |
+| 8 | Lanthanide |
+| 9 | Actinide |
+
+The visual category colors are defined in `css/variables.css` and referenced by the element cards and detail modal.
+
+## 3D Layout Mathematics
+
+The application does not use a dedicated 3D engine. Positions are calculated directly in JavaScript and rendered with CSS 3D transforms.
+
+### Table Layout
+
+The table layout uses each element's configured column and row values with centralized cell spacing constants.
+
+### Sphere Layout
+
+The sphere layout distributes the 118 elements using angular coordinates derived from the element index and the total number of elements.
+
+### Helix Layout
+
+The helix layout uses a configurable angular step, radius, and vertical step to create a spiral path.
+
+### Grid Layout
+
+The grid layout uses a 5 × 5 × 5 logical volume, providing enough positions for all 118 elements.
+
+## Animation
+
+**Anime.js 3.2.1** is used for:
+
+- transitions between element layouts,
+- camera reset animation.
+
+Layout transitions use centralized timing constants defined in `js/utils/helpers.js`.
+
+## Camera Constraints
+
+Current camera configuration includes:
+
+- default Z position: `-2600px`,
+- minimum Z: `-6000px`,
+- maximum Z: `-500px`,
+- vertical rotation clamp: `-90°` to `90°`.
+
+The camera state is updated through a requestAnimationFrame loop and written to CSS variables only when the state is marked dirty.
+
+## Running the Project
+
+The project does not require a package manager, backend server, or build tool.
+
+### Option 1 — Open directly
+
+Open `index.html` in a modern browser.
+
+### Option 2 — Use a local HTTP server
+
+Using a local server is recommended for a more predictable ES Module environment.
+
+Example with Python:
+
 ```bash
-# Just open the file — no npm, no build step, no server required
-open index.html
+python -m http.server 8000
 ```
 
-Or drag-and-drop `index.html` into any browser.
+Then open:
+
+```text
+http://localhost:8000
+```
+
+Run the command from the project root so that `index.html` and the `css/` and `js/` directories are served with their expected relative paths.
+
+## Browser Requirements
+
+The project is intended for modern browsers with support for:
+
+- ES Modules,
+- CSS 3D transforms,
+- Pointer Events,
+- Touch Events,
+- `requestAnimationFrame`.
+
+Exact browser-version support is not formally defined by the project.
+
+## Interaction Model
+
+### Long Press
+
+Element details are intentionally opened through a long-press interaction rather than a normal click. The default threshold is:
+
+```text
+500 ms
+```
+
+The press is canceled when pointer movement exceeds the configured drift threshold.
+
+### Menu Interaction
+
+The navigation menu can be opened with the hamburger button and closed through:
+
+- the close button,
+- the backdrop,
+- or automatic close behavior after selecting a language/layout.
+
+## Accessibility Notes
+
+The current implementation includes some basic semantic controls, such as buttons for the hamburger, close, and language controls. However, the overall experience is currently optimized primarily for direct visual interaction with the 3D scene.
+
+Keyboard navigation, screen-reader semantics for all element cards, and a full accessibility audit are not currently implemented as a dedicated feature set.
+
+## External Dependencies
+
+The application references external resources from the following services:
+
+- Google Fonts
+- jsDelivr / Font Awesome
+- cdnjs / Anime.js
+
+Because these are loaded from CDNs, the application may require network access for all visual assets and the animation library to load normally.
+
+## Development Guidelines
+
+When extending the project, keep the existing separation of responsibilities:
+
+- put element data in `data/`,
+- put 3D state/math in `core/`,
+- put reusable UI behavior in `components/`,
+- put user-facing features in `features/`,
+- put shared constants/utilities in `utils/`,
+- keep `main.js` focused on application initialization.
+
+Avoid moving unrelated concerns back into `index.html` or creating unnecessary global state.
+
+For changes involving the 3D scene, test all four layouts after modification.
+
+For changes involving element data, test representative elements from the beginning, middle, and end of the dataset.
+
+For changes involving language handling, test both `EN` and `ID` and verify both element cards and the detail modal.
+
+For changes involving input handling, test both mouse and touch interactions where applicable.
+
+## Verification Checklist
+
+Before considering a change complete, verify:
+
+```text
+[ ] Application starts without uncaught JavaScript errors
+[ ] All 118 elements render
+[ ] Table layout works
+[ ] Sphere layout works
+[ ] Helix layout works
+[ ] Grid layout works
+[ ] Layout animations work
+[ ] Camera rotation works
+[ ] Camera pan works
+[ ] Camera zoom works
+[ ] Long press opens the correct element
+[ ] Element modal shows correct values
+[ ] Modal closes correctly
+[ ] English language works
+[ ] Indonesian language works
+[ ] Menu opens and closes correctly
+[ ] Touch interaction works on supported devices
+[ ] Responsive styling remains intact
+[ ] No broken local imports or stylesheet paths
+```
+
+## Current Limitations
+
+The current source does **not** include the following features:
+
+- element search,
+- category filtering UI,
+- element comparison,
+- quiz/learning mode,
+- electron configuration visualization,
+- hand tracking / webcam control,
+- persistent application settings,
+- backend/API integration,
+- package-manager-based build pipeline,
+- automated test suite.
+
+These can be added later without changing the fundamental purpose of the application.
+
+## Future Development Ideas
+
+Potential next steps that fit the current architecture include:
+
+1. **Search & focus** — search by symbol, name, or atomic number and automatically focus the selected element.
+2. **Category filters** — isolate or highlight element categories.
+3. **Expanded element explorer** — add richer chemical information to the existing modal.
+4. **Property visualization** — recolor or visualize the table by density, atomic mass, melting point, or boiling point.
+5. **Element comparison** — compare selected elements side by side.
+6. **Learning / quiz mode** — turn the visualization into an interactive educational tool.
+7. **Hand tracking** — optionally use webcam-based gestures as another interaction method for the 3D scene.
+8. **Settings** — centralize language, visual, and interaction preferences.
+
+## Project Status
+
+**Application type:** Interactive front-end web application  
+**Domain:** Chemistry / Education / Data Visualization  
+**Architecture:** Modular client-side JavaScript  
+**Rendering:** CSS 3D transforms  
+**Data:** Embedded JavaScript dataset  
+**Backend:** None  
+**Build system:** None required
+
+## License
+
+No license is specified in the current project files.
+
+Before publishing or distributing the project publicly, add an explicit license file such as `LICENSE` and update this section accordingly.
+
+## Credits
+
+This project uses the following third-party resources:
+
+- [Anime.js](https://animejs.com/)
+- [Font Awesome](https://fontawesome.com/)
+- [Google Fonts](https://fonts.google.com/)
+
+Their respective licenses and terms should be reviewed before redistribution.
 
 ---
 
-## 🌐 Deployment
-
-### Vercel (Recommended)
-1. Push `index.html` to a GitHub repository
-2. Go to [vercel.com](https://vercel.com) → **Import Project**
-3. Select your repo → Deploy instantly
-4. Done — no config needed for single-file projects
-
-### GitHub Pages
-1. Push to a GitHub repo
-2. Go to **Settings → Pages**
-3. Set source to `main` branch → `/root`
-4. Access at `https://your-username.github.io/repo-name`
-
-### Netlify
-Drop the file directly into [app.netlify.com/drop](https://app.netlify.com/drop) — instant deploy.
-
----
-
-## 📱 Interaction Quick Reference
-
-| Action | Desktop | Mobile |
-|--------|---------|--------|
-| Rotate scene | Left drag | 1-finger drag |
-| Zoom | Scroll wheel | 2-finger pinch |
-| Pan | Right drag | 2-finger drag |
-| Element details | Hold 0.5s | Long press 0.5s |
-| Change layout | Click menu → select | Tap menu → select |
-| Switch language | Menu → EN / ID toggle | Menu → EN / ID toggle |
-
----
-
-## 💡 Future Improvements
-
-- 🔍 **Search & highlight** — find element by name, symbol, or atomic number
-- 🎯 **Focus / fly-to** — smooth camera fly to a specific element
-- 🧠 **Quiz mode** — interactive learning with flashcard-style questions
-- 📊 **More properties** — electronegativity, electron configuration, discovery year
-- 🧲 **Snap-to-layout** — lock camera angle to best view per layout
-- 🎨 **Category filter** — toggle visibility by element group
-- 🌙 **Light theme** — optional high-contrast mode
-
----
-
-## 📦 Dependencies
-
-All loaded via CDN — no local installation required:
-
-| Library | Version | Purpose |
-|---------|---------|---------|
-| [Anime.js](https://animejs.com) | 3.2.1 | Layout transitions & camera animations |
-| [FontAwesome](https://fontawesome.com) | 7.2.0 | UI icons (hand pointer, etc.) |
-| [Google Fonts](https://fonts.google.com) | — | Outfit, JetBrains Mono, Share Tech Mono |
-
----
-
-## 👨‍💻 Author
-
-**Your Name**
-- GitHub: [https://github.com/mzhnk](https://github.com/mzhnk)
-- Live Demo: [https://periodic-table-zk.vercel.app](https://periodic-table-zk.vercel.app)
-
----
-
-## ⭐ Support
-
-If you found this project useful or cool, drop a ⭐ on GitHub — it helps a lot!
+**3D Periodic Table** — an interactive way to explore the periodic elements through 3D layouts and direct manipulation in the browser.
