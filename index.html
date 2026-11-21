@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description"
+          content="Interactive 3D periodic table of all 118 chemical elements with table, sphere, helix and grid layouts.">
+    <title>3D Periodic Table</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Share+Tech+Mono&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/categories.css">
+    <link rel="stylesheet" href="css/shortcuts.css">
+    <link rel="stylesheet" href="css/periodic-table.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/responsive.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+</head>
+<body>
+
+    <!-- Dimming layer shown while the dropdown menu is open -->
+    <div class="backdrop" id="backdrop"></div>
+
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu"
+            aria-controls="dropdownWrapper" aria-expanded="false">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+
+    <!-- Element search: lights up matching cards in every layout -->
+    <div class="search-bar" id="searchBar" role="search">
+        <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+        <input id="searchInput" type="text" autocomplete="off" autocapitalize="none"
+               spellcheck="false" enterkeyhint="search"
+               data-i18n-ph="searchPlaceholder" data-i18n-aria="searchPlaceholder"
+               placeholder="Search name, symbol, number..."
+               aria-label="Search name, symbol, number...">
+        <button class="search-clear" id="searchClearBtn" hidden
+                data-i18n-aria="searchClear" aria-label="Clear search">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <div class="search-empty" id="searchEmpty" role="status" hidden></div>
+    </div>
+
+    <!-- Keyboard shortcuts help (desktop only, hidden on touch devices) -->
+    <button class="help-btn" id="helpBtn" aria-haspopup="dialog" aria-expanded="false"
+            data-i18n-aria="helpLabel" aria-label="Keyboard shortcuts">
+        <i class="fa-solid fa-question" aria-hidden="true"></i>
+    </button>
+
+    <!-- Slide-in menu: layout switcher and language toggle -->
+    <div class="dropdown-wrapper" id="dropdownWrapper">
+        <div class="dropdown-panel">
+            <div class="close-row">
+                <button class="close-btn" id="closeBtn" title="Close" aria-label="Close menu">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="divider d1"></div>
+            <div class="section-label sl1" id="lbl-layout">Layout</div>
+
+            <div class="layout-items">
+                <div class="layout-item selected" data-layout="table" role="button" tabindex="0" aria-pressed="true">
+                    <span class="item-icon"><i class="fa-solid fa-table-cells"></i></span>
+                    <span class="item-name" id="lbl-table">Table</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="sphere" role="button" tabindex="0" aria-pressed="false">
+                    <span class="item-icon"><i class="fa-solid fa-globe"></i></span>
+                    <span class="item-name" id="lbl-sphere">Sphere</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="helix" role="button" tabindex="0" aria-pressed="false">
+                    <span class="item-icon"><i class="fa-solid fa-dna"></i></span>
+                    <span class="item-name" id="lbl-helix">Helix</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+                <div class="layout-item" data-layout="grid" role="button" tabindex="0" aria-pressed="false">
+                    <span class="item-icon"><i class="fa-solid fa-grip"></i></span>
+                    <span class="item-name" id="lbl-grid">Grid</span>
+                    <i class="fa-solid fa-check item-check"></i>
+                </div>
+            </div>
+
+            <div class="divider d2"></div>
+            <div class="section-label sl2" id="lbl-lang">Language</div>
+
+            <div class="lang-section">
+                <div class="lang-toggle" id="langToggle">
+                    <button class="lang-btn active" data-lang="EN">EN</button>
+                    <button class="lang-btn" data-lang="ID">ID</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category filter: chip panel anchored to its bottom-left toggle -->
+    <button class="categories-toggle" id="categoriesToggle"
+            aria-controls="categoriesPanel" aria-expanded="false"
+            data-i18n-aria="categoriesOpen" aria-label="Show category filters">
+        <i class="fa-solid fa-shapes" aria-hidden="true"></i>
+        <span class="cat-indicator" aria-hidden="true"></span>
+    </button>
+
+    <div class="categories-panel" id="categoriesPanel" role="group"
+            data-i18n-aria="categoriesLabel" aria-label="Categories">
+        <div class="categories-head">
+            <i class="fa-solid fa-shapes" aria-hidden="true"></i>
+            <span class="categories-title" data-i18n="categoriesLabel">CATEGORIES</span>
+            <button class="cat-close" id="categoriesCloseBtn"
+                    data-i18n-aria="categoriesClose" aria-label="Hide category filters">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="cat-chips" id="catChips"></div>
+    </div>
+
+    <!-- Interaction hint -->
+    <div class="helper-text" id="helper-txt">
+        <div class="main-hlp">
+            <i class="fa-regular fa-hand-pointer"></i>
+            <span>HOLD 0.5s</span> on element for details
+        </div>
+    </div>
+
+    <!-- 3D scene: #scene is the camera rig (translation + rotation via CSS
+         custom properties owned by camera.js); element cards are appended
+         here as direct children. -->
+    <div id="scene"></div>
+
+    <!-- Keyboard shortcuts reference (desktop only) -->
+    <div id="shortcutsOverlay" role="dialog" aria-modal="true"
+            aria-labelledby="lbl-shortcuts-title">
+        <div class="shortcuts-card">
+            <h2 class="shortcuts-title" id="lbl-shortcuts-title"
+                data-i18n="shortcutsTitle">KEYBOARD SHORTCUTS</h2>
+
+            <div class="sc-label" data-i18n="scSectionLayouts">LAYOUTS</div>
+            <div class="sc-row"><span data-i18n="table">Table</span><kbd>1</kbd></div>
+            <div class="sc-row"><span data-i18n="sphere">Sphere</span><kbd>2</kbd></div>
+            <div class="sc-row"><span data-i18n="helix">Helix</span><kbd>3</kbd></div>
+            <div class="sc-row"><span data-i18n="grid">Grid</span><kbd>4</kbd></div>
+
+            <div class="sc-label" data-i18n="scSectionLanguage">LANGUAGE</div>
+            <div class="sc-row"><span data-i18n="scLangEN">English</span><kbd>E</kbd></div>
+            <div class="sc-row"><span data-i18n="scLangID">Indonesia</span><kbd>I</kbd></div>
+
+            <div class="sc-label" data-i18n="scSectionActions">ACTIONS</div>
+            <div class="sc-row"><span data-i18n="scReset">Reset camera</span><kbd>R</kbd></div>
+            <div class="sc-row"><span data-i18n="scSearch">Focus search</span><kbd>/</kbd></div>
+            <div class="sc-row"><span data-i18n="scToggle">Show/hide this overlay</span><kbd>?</kbd></div>
+            <div class="sc-row"><span data-i18n="scClose">Close modal / menu / overlay</span><kbd>Esc</kbd></div>
+
+            <div class="sc-foot" data-i18n="shortcutsFooterHTML">Click anywhere or press <kbd>Esc</kbd> to close</div>
+        </div>
+    </div>
+
+    <!-- Element detail modal -->
+    <div id="modal-overlay">
+        <div class="modal-card" id="modal-card" style="--modal-color: 255,255,255;">
+            <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close details">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-header">
+                <div class="modal-symbol" id="m-sym">Al</div>
+                <div class="modal-number" id="m-num">13</div>
+            </div>
+            <div class="modal-name" id="m-name">Aluminium</div>
+            <div class="modal-stat">
+                <span class="modal-label" id="lbl-mass">Atomic Mass:</span>
+                <span class="modal-value" id="m-mass"></span>
+            </div>
+            <div class="modal-stat">
+                <span class="modal-label" id="lbl-den">Density:</span>
+                <span class="modal-value" id="m-den"></span>
+            </div>
+            <div class="modal-stat">
+                <span class="modal-label" id="lbl-melt">Melting Point:</span>
+                <span class="modal-value" id="m-melt"></span>
+            </div>
+            <div class="modal-stat">
+                <span class="modal-label" id="lbl-boil">Boiling Point:</span>
+                <span class="modal-value" id="m-boil"></span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
