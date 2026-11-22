@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Interactive 3D periodic table built with CSS 3D transforms and Anime.js. Explore all 118 elements in table, sphere, helix and grid layouts.">
+    <meta name="theme-color" content="#07080D">
+    <title>3D Periodic Table</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2307080D'/%3E%3Ctext x='32' y='44' font-size='32' font-weight='bold' text-anchor='middle' fill='%2300E0FF' font-family='monospace'%3EPt%3C/text%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        :root {
+            /* Element card dimensions and category colours (RGB triplets) */
+            --w: 130px; --h: 170px;
+            --c-0: 255, 60, 60;      /* Nonmetal */
+            --c-1: 60, 255, 255;     /* Noble gas */
+            --c-2: 255, 165, 0;      /* Alkali metal */
+            --c-3: 255, 220, 0;      /* Alkaline earth */
+            --c-4: 150, 255, 60;     /* Metalloid */
+            --c-5: 0, 191, 255;      /* Halogen */
+            --c-6: 255, 105, 180;    /* Post-transition metal */
+            --c-7: 60, 200, 100;     /* Transition metal */
+            --c-8: 144, 238, 144;    /* Lanthanide */
+            --c-9: 221, 160, 221;    /* Actinide */
+            
+            --cam-x: 0px; --cam-y: 0px; --cam-z: -2600px;
+            --rot-x: 0deg; --rot-y: 0deg;
+
+            /* UI theme */
+            --bg:          #07080D;
+            --surface:     #0D0F17;
+            --surface-2:   #131622;
+            --surface-3:   #1A1E2E;
+            --border:      rgba(255,255,255,0.055);
+            --border-neon: rgba(0,224,255,0.18);
+            --neon:        #00E0FF;
+            --neon-dim:    rgba(0,224,255,0.08);
+            --neon-glow:   rgba(0,224,255,0.35);
+            --text:        #DDE3F0;
+            --text-2:      #6E7890;
+            --text-3:      #353B52;
+            --panel-w:     260px;
+            --r:           14px;
+            --spring:      cubic-bezier(0.16, 1, 0.3, 1);
+            --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at center, #11141d 0%, #07080D 100%);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            overflow: hidden; 
+            height: 100vh;
+            height: 100dvh; 
+            width: 100vw;
+            perspective: 1200px; cursor: grab;
+            -webkit-touch-callout: none;
+            touch-action: none;
+        }
+        body:active { cursor: grabbing; }
+        body.over-element:not(:active) { cursor: pointer; }
+
+        /* Menu button */
+        .hamburger {
+            position: fixed; top: max(20px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left));
+            width: 44px; height: 44px; border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(13,15,23,0.8);
+            backdrop-filter: blur(10px);
+            cursor: pointer; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px;
+            transition: background .2s, border-color .25s, box-shadow .25s;
+            z-index: 160;
+        }
+        .hamburger:hover { border-color: var(--border-neon); background: var(--neon-dim); box-shadow: 0 0 14px var(--neon-dim); }
+        .hamburger.active {
+            border-color: rgba(0,224,255,0.4); background: rgba(0,224,255,0.07);
+            box-shadow: 0 0 0 3px rgba(0,224,255,0.10), 0 0 20px rgba(0,224,255,0.12);
+        }
+        .bar { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--text-2); transition: background .25s; }
+        .hamburger:hover .bar, .hamburger.active .bar { background: var(--neon); }
+
+        /* Dropdown menu */
+        .dropdown-wrapper {
+            position: fixed; top: calc(max(20px, env(safe-area-inset-top)) + 55px); left: max(10px, env(safe-area-inset-left)); width: var(--panel-w);
+            z-index: 150; overflow: hidden; max-height: 0; visibility: hidden;
+            transition: max-height .56s var(--spring), visibility 0s linear .56s;
+            font-family: 'Outfit', sans-serif;
+        }
+        .dropdown-wrapper.open { max-height: 600px; visibility: visible; transition-delay: 0s; }
+
+        .dropdown-panel {
+            margin: 0 10px 15px;
+            background: rgba(13,15,23,0.85); backdrop-filter: blur(28px) saturate(160%);
+            border: 1px solid var(--border); border-radius: var(--r); padding: 10px;
+            position: relative;
+            box-shadow: 0 0 0 1px rgba(0,224,255,0.05), 0 32px 64px rgba(0,0,0,0.72), 0 0 40px rgba(0,224,255,0.04);
+            transform: translateY(-14px) scale(0.97); opacity: 0; transform-origin: top left;
+            transition: transform .46s var(--spring) .04s, opacity .28s var(--ease) .04s;
+            will-change: transform, opacity;
+        }
+        .dropdown-wrapper.open .dropdown-panel { transform: translateY(0) scale(1); opacity: 1; }
+
+        .dropdown-panel::before {
+            content: ''; position: absolute; top:-1px; left:16px; right:16px; height:1px;
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            opacity: 0; transition: opacity .4s var(--ease) .22s;
+        }
+        .dropdown-wrapper.open .dropdown-panel::before { opacity: 0.6; }
+
+        .close-row {
+            display: flex; align-items: center; justify-content: flex-end;
+            padding-bottom: 6px; opacity: 0; transform: translateX(-8px);
+            transition: opacity .28s var(--ease) .08s, transform .34s var(--spring) .08s;
+        }
+        .dropdown-wrapper.open .close-row { opacity: 1; transform: translateX(0); }
+        .close-btn {
+            width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--surface-2); color: var(--text-3); font-size: 12px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .close-btn:hover { background: rgba(255,75,75,0.15); border-color: rgba(255,75,75,0.3); color: #FF6B6B; box-shadow: 0 0 12px rgba(255,75,75,0.2); }
+
+        .divider {
+            height: 1px; margin: 8px 4px; background: linear-gradient(90deg, var(--border-neon), var(--border), transparent);
+            opacity: 0; transition: opacity .3s var(--ease);
+        }
+        .dropdown-wrapper.open .d1 { opacity: 1; transition-delay: .12s; }
+        .dropdown-wrapper.open .d2 { opacity: 1; transition-delay: .28s; }
+        
+        .section-label {
+            padding: 4px 8px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
+            letter-spacing: .16em; text-transform: uppercase; color: var(--text-3);
+            display: flex; align-items: center; gap: 6px; opacity: 0; transform: translateX(-6px);
+            transition: opacity .28s var(--ease), transform .32s var(--spring);
+        }
+        .section-label::after { content:''; flex:1; height:1px; background: var(--border); }
+        .dropdown-wrapper.open .sl1 { opacity:1; transform:translateX(0); transition-delay:.13s; }
+        .dropdown-wrapper.open .sl2 { opacity:1; transform:translateX(0); transition-delay:.29s; }
+
+        /* Layout options */
+        .layout-items { display: flex; flex-direction: column; gap: 3px; }
+        .layout-item {
+            width: 100%; background: transparent; font-family: inherit; text-align: left;
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: 9px; cursor: pointer; position: relative; overflow: hidden;
+            color: var(--text-2); font-size: 14px; font-weight: 500; letter-spacing: .02em;
+            border: 1px solid transparent; opacity: 0; transform: translateX(-10px);
+            transition: color .2s, background .2s, border-color .2s, box-shadow .2s, opacity .32s, transform .38s var(--spring);
+        }
+        .layout-item::after {
+            content:''; position:absolute; inset:0;
+            background: linear-gradient(90deg, transparent 0%, rgba(0,224,255,0.05) 50%, transparent 100%);
+            transform: translateX(-100%); transition: transform .5s var(--ease);
+        }
+        .layout-item:hover::after { transform: translateX(100%); }
+        .layout-item:hover { color: var(--text); background: var(--neon-dim); border-color: rgba(0,224,255,0.10); }
+        .layout-item.selected {
+            color: var(--neon); background: rgba(0,224,255,0.07); border-color: rgba(0,224,255,0.18);
+            box-shadow: 0 0 18px rgba(0,224,255,0.06), inset 0 0 14px rgba(0,224,255,0.03);
+        }
+        .layout-item.selected::before {
+            content:''; position:absolute; left:-1px; top:20%; bottom:20%; width:2px; border-radius:2px;
+            background: var(--neon); box-shadow: 0 0 8px var(--neon-glow), 0 0 16px var(--neon-dim);
+        }
+        .item-icon { width: 20px; font-size: 14px; display: flex; justify-content: center; color: var(--text-3); transition: .2s; }
+        .layout-item:hover .item-icon { color: var(--text-2); }
+        .layout-item.selected .item-icon { color: var(--neon); filter: drop-shadow(0 0 5px var(--neon-glow)); }
+        .item-name { flex: 1; transition: 0.3s; }
+        .item-check {
+            font-size: 11px; color: var(--neon); opacity: 0; transform: scale(0.4) rotate(-10deg);
+            transition: opacity .22s var(--ease), transform .28s var(--spring); filter: drop-shadow(0 0 4px var(--neon-glow));
+        }
+        .layout-item.selected .item-check { opacity: 1; transform: scale(1) rotate(0deg); }
+
+        .dropdown-wrapper.open .layout-item:nth-child(1) { opacity:1; transform:translateX(0); transition-delay:.15s; }
+        .dropdown-wrapper.open .layout-item:nth-child(2) { opacity:1; transform:translateX(0); transition-delay:.18s; }
+        .dropdown-wrapper.open .layout-item:nth-child(3) { opacity:1; transform:translateX(0); transition-delay:.21s; }
+        .dropdown-wrapper.open .layout-item:nth-child(4) { opacity:1; transform:translateX(0); transition-delay:.24s; }
+
+        /* Language switch */
+        .lang-section { padding: 8px 4px 4px; opacity:0; transform:translateX(-6px); transition: opacity .3s var(--ease) .31s, transform .36s var(--spring) .31s; }
+        .dropdown-wrapper.open .lang-section { opacity: 1; transform: translateX(0); }
+        
+        .lang-toggle {
+            position: relative; display: flex; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 9px; padding: 4px;
+        }
+        .lang-toggle::before {
+            content: ''; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+            border-radius: 6px; background: var(--surface-3); border: 1px solid var(--border-neon);
+            box-shadow: 0 0 10px rgba(0,224,255,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+            transition: left .32s var(--spring); pointer-events: none;
+        }
+        .lang-toggle.id-active::before { left: 50%; }
+
+        .lang-btn {
+            flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+            letter-spacing: .1em; padding: 8px 0; text-align: center; cursor: pointer;
+            border: none; background: none; color: var(--text-3); position: relative; z-index: 1;
+            transition: color .25s var(--ease);
+        }
+        .lang-btn.active { color: var(--neon); text-shadow: 0 0 10px var(--neon-glow); }
+
+        /* Backdrop */
+        .backdrop {
+            position: fixed; inset: 0; z-index: 130; pointer-events: none;
+            transition: background .3s var(--ease), backdrop-filter .3s;
+        }
+        .backdrop.active { pointer-events: auto; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
+        
+        .helper-text {
+            position: fixed; 
+            bottom: max(25px, calc(25px + env(safe-area-inset-bottom)));
+            left: 50%; transform: translateX(-50%);
+            width: max-content; max-width: 90vw; 
+            color: rgba(255,255,255,0.6); font-size: 12px; font-family: 'Outfit', sans-serif;
+            background: rgba(13,15,23,0.75); padding: 8px 20px; border-radius: 20px;
+            pointer-events: none; border: 1px solid var(--border); text-align: center;
+            backdrop-filter: blur(8px); z-index: 10; 
+            display: flex; flex-direction: column;
+            line-height: 1.5; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: opacity 0.3s;
+        }
+        .helper-text .main-hlp { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .helper-text .hint-key { color: var(--neon); font-weight: 600; text-shadow: 0 0 8px var(--neon-glow); }
+
+        /* 3D scene and element cards */
+        #scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-style: preserve-3d; }
+        #scene-camera { position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate3d(var(--cam-x), var(--cam-y), var(--cam-z)); will-change: transform; }
+        #scene-rotator { position: absolute; top: 0; left: 0; transform-style: preserve-3d; transform: rotateX(var(--rot-x)) rotateY(var(--rot-y)); will-change: transform; }
+        #scene-content { position: absolute; transform-style: preserve-3d; }
+
+        .element {
+            position: absolute; width: var(--w); height: var(--h);
+            left: calc(-1 * var(--w) / 2); top: calc(-1 * var(--h) / 2);
+            background: rgba(var(--color-rgb), 0.08); border: 1px solid rgba(var(--color-rgb), 0.4);
+            border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; transition: background 0.3s, border-color 0.3s;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+            /* Hit-testing is done by the picking engine in the script: native pointer events
+               are unreliable for small, overlapping 3D cards. */
+            pointer-events: none;
+            will-change: transform;
+        }
+        .element.hot {
+            background: rgba(var(--color-rgb), 0.3); border-color: rgba(var(--color-rgb), 1);
+            box-shadow: 0 0 30px rgba(var(--color-rgb), 0.6), inset 0 0 15px rgba(var(--color-rgb), 0.3); z-index: 10;
+        }
+        .element.pressing { background: rgba(var(--color-rgb), 0.6); box-shadow: 0 0 35px rgba(var(--color-rgb), 1); }
+        .element-number { position: absolute; top: 6px; right: 8px; font-size: 13px; color: rgba(var(--color-rgb), 0.8); }
+        .element-symbol { font-size: 56px; font-weight: bold; color: rgba(var(--color-rgb), 1); line-height: 1; margin-bottom: 5px; text-shadow: 0 0 12px rgba(var(--color-rgb), 0.5);}
+        .element-title { font-size: 12.5px; color: rgba(var(--color-rgb), 0.9); text-transform: uppercase; font-family: 'Outfit', sans-serif;}
+        #debug-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+
+        /* Element detail modal */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            z-index: 2000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
+        #modal-overlay.active { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+        .modal-card {
+            width: 340px; max-width: 90vw; padding: 25px; background: rgba(var(--modal-color), 0.08); font-family: 'Outfit', sans-serif;
+            border: 1px solid rgba(var(--modal-color), 0.8); border-radius: 12px;
+            box-shadow: 0 0 50px rgba(var(--modal-color), 0.3), inset 0 0 20px rgba(var(--modal-color), 0.1);
+            color: rgba(var(--modal-color), 1); transform: translateY(30px) scale(0.9); transition: transform 0.3s var(--spring);
+            position: relative;
+        }
+        #modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .modal-symbol { font-size: 70px; font-family: 'Share Tech Mono'; font-weight: bold; line-height: 1; text-shadow: 0 0 15px rgba(var(--modal-color), 0.6);}
+        .modal-number { font-size: 28px; font-family: 'JetBrains Mono'; opacity: 0.8;}
+        .modal-name { font-size: 26px; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid rgba(var(--modal-color), 0.4); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;}
+        .modal-stat { font-size: 15px; margin-bottom: 10px; opacity: 0.9; display: flex; justify-content: space-between;}
+        
+        .modal-close-btn {
+            position: absolute; top: -15px; right: -15px; width: 36px; height: 36px; border-radius: 50%;
+            background: #111; border: 2px solid rgba(var(--modal-color), 1); color: white; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; font-size: 14px; transition: 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .modal-close-btn:hover { background: rgba(var(--modal-color), 1); color: black; transform: scale(1.1); }
+
+        .modal-stat-label { opacity: 0.7; }
+        .modal-stat-value { font-weight: 600; }
+
+        button:focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
+
+        .no-js-message {
+            position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-family: 'Outfit', sans-serif; color: var(--text-2); text-align: center; padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    <noscript><div class="no-js-message">This interactive periodic table requires JavaScript.</div></noscript>
+
+    <div class="backdrop" id="backdrop"></div>
+    <button type="button" class="hamburger" id="hamburgerBtn" data-i18n-label="menu" aria-label="Menu" aria-expanded="false" aria-controls="dropdownWrapper">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+
+    <div class="dropdown-wrapper" id="dropdownWrapper">
+        <div class="dropdown-panel">
+            <div class="close-row">
+                <button type="button" class="close-btn" id="closeBtn" data-i18n-label="close" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+
+            <div class="divider d1"></div>
+            <div class="section-label sl1" data-i18n="layout"></div>
+
+            <div class="layout-items">
+                <button type="button" class="layout-item" data-layout="table" aria-pressed="false">
+                    <span class="item-icon"><i class="fa-solid fa-table-cells" aria-hidden="true"></i></span>
+                    <span class="item-name" data-i18n="table"></span>
+                    <i class="fa-solid fa-check item-check" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="layout-item" data-layout="sphere" aria-pressed="false">
+                    <span class="item-icon"><i class="fa-solid fa-globe" aria-hidden="true"></i></span>
+                    <span class="item-name" data-i18n="sphere"></span>
+                    <i class="fa-solid fa-check item-check" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="layout-item" data-layout="helix" aria-pressed="false">
+                    <span class="item-icon"><i class="fa-solid fa-dna" aria-hidden="true"></i></span>
+                    <span class="item-name" data-i18n="helix"></span>
+                    <i class="fa-solid fa-check item-check" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="layout-item" data-layout="grid" aria-pressed="false">
+                    <span class="item-icon"><i class="fa-solid fa-grip" aria-hidden="true"></i></span>
+                    <span class="item-name" data-i18n="grid"></span>
+                    <i class="fa-solid fa-check item-check" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="divider d2"></div>
+            <div class="section-label sl2" data-i18n="language"></div>
+
+            <div class="lang-section">
+                <div class="lang-toggle" id="langToggle">
+                    <button type="button" class="lang-btn" data-lang="EN" aria-pressed="false">EN</button>
+                    <button type="button" class="lang-btn" data-lang="ID" aria-pressed="false">ID</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="helper-text" id="helper-txt">
+        <div class="main-hlp"><i class="fa-regular fa-hand-pointer" aria-hidden="true"></i> <span class="hint-key" data-i18n="hintKey"></span> <span data-i18n="hintRest"></span></div>
+    </div>
+
+    <div id="scene">
+        <div id="scene-camera">
+            <div id="scene-rotator">
+                <div id="scene-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" aria-hidden="true">
+        <div class="modal-card" id="modal-card" role="dialog" aria-modal="true" aria-labelledby="m-name" style="--modal-color: 255,255,255;">
+            <button type="button" class="modal-close-btn" id="modalCloseBtn" data-i18n-label="close" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            <div class="modal-header">
+                <div class="modal-symbol" id="m-sym"></div>
+                <div class="modal-number" id="m-num"></div>
+            </div>
+            <div class="modal-name" id="m-name"></div>
+            <div class="modal-stat"><span class="modal-stat-label" data-i18n="mass"></span> <span class="modal-stat-value" id="m-mass"></span></div>
+            <div class="modal-stat"><span class="modal-stat-label" data-i18n="density"></span> <span class="modal-stat-value" id="m-den"></span></div>
+            <div class="modal-stat"><span class="modal-stat-label" data-i18n="melting"></span> <span class="modal-stat-value" id="m-melt"></span></div>
+            <div class="modal-stat"><span class="modal-stat-label" data-i18n="boiling"></span> <span class="modal-stat-value" id="m-boil"></span></div>
+        </div>
+    </div>
+
+    <script>
+    (() => {
+        'use strict';
+
+        /* ------------------------------------------------------------------
+         * Data
+         * ------------------------------------------------------------------ */
+
+        // Category indices map to the --c-N colour variables in the stylesheet.
+        const CAT = {
+            NONMETAL: 0, NOBLE_GAS: 1, ALKALI_METAL: 2, ALKALINE_EARTH: 3, METALLOID: 4,
+            HALOGEN: 5, POST_TRANSITION: 6, TRANSITION: 7, LANTHANIDE: 8, ACTINIDE: 9
+        };
+
+        // Row format:
+        // [symbol, English name, Indonesian name, category, table column, table row,
+        //  atomic mass, density, melting point, boiling point]
+        // "SUBLIMES" is replaced with the localized word at render time.
+        const ELEMENT_ROWS = [
+            ['H', 'Hydrogen', 'Hidrogen', CAT.NONMETAL, 1, 1, '1.008 u', '0.089 g/L', '-259.16 °C', '-252.88 °C'],
+            ['He', 'Helium', 'Helium', CAT.NOBLE_GAS, 18, 1, '4.0026 u', '0.178 g/L', '-272.2 °C', '-268.93 °C'],
+            ['Li', 'Lithium', 'Litium', CAT.ALKALI_METAL, 1, 2, '6.94 u', '0.534 g/cm³', '180.5 °C', '1329.85 °C'],
+            ['Be', 'Beryllium', 'Berilium', CAT.ALKALINE_EARTH, 2, 2, '9.012 u', '1.85 g/cm³', '1286.85 °C', '2468.85 °C'],
+            ['B', 'Boron', 'Boron', CAT.METALLOID, 13, 2, '10.81 u', '2.08 g/cm³', '2075.85 °C', '3926.85 °C'],
+            ['C', 'Carbon', 'Karbon', CAT.NONMETAL, 14, 2, '12.011 u', '1.821 g/cm³', 'SUBLIMES', 'SUBLIMES'],
+            ['N', 'Nitrogen', 'Nitrogen', CAT.NONMETAL, 15, 2, '14.007 u', '1.251 g/L', '-210 °C', '-195.79 °C'],
+            ['O', 'Oxygen', 'Oksigen', CAT.NONMETAL, 16, 2, '15.999 u', '1.429 g/L', '-218.79 °C', '-182.96 °C'],
+            ['F', 'Fluorine', 'Fluor', CAT.HALOGEN, 17, 2, '18.998 u', '1.696 g/L', '-219.67 °C', '-188.12 °C'],
+            ['Ne', 'Neon', 'Neon', CAT.NOBLE_GAS, 18, 2, '20.180 u', '0.900 g/L', '-248.59 °C', '-246.05 °C'],
+            ['Na', 'Sodium', 'Natrium', CAT.ALKALI_METAL, 1, 3, '22.990 u', '0.968 g/cm³', '97.79 °C', '882.94 °C'],
+            ['Mg', 'Magnesium', 'Magnesium', CAT.ALKALINE_EARTH, 2, 3, '24.305 u', '1.738 g/cm³', '649.85 °C', '1089.85 °C'],
+            ['Al', 'Aluminium', 'Aluminium', CAT.POST_TRANSITION, 13, 3, '26.982 u', '2.7 g/cm³', '660.32 °C', '2469.85 °C'],
+            ['Si', 'Silicon', 'Silikon', CAT.METALLOID, 14, 3, '28.085 u', '2.329 g/cm³', '1413.85 °C', '3264.85 °C'],
+            ['P', 'Phosphorus', 'Fosfor', CAT.NONMETAL, 15, 3, '30.974 u', '1.823 g/cm³', '44.1 °C', '280.5 °C'],
+            ['S', 'Sulfur', 'Belerang', CAT.NONMETAL, 16, 3, '32.06 u', '2.07 g/cm³', '115.21 °C', '444.65 °C'],
+            ['Cl', 'Chlorine', 'Klorin', CAT.HALOGEN, 17, 3, '35.45 u', '3.2 g/L', '-101.55 °C', '-34.04 °C'],
+            ['Ar', 'Argon', 'Argon', CAT.NOBLE_GAS, 18, 3, '39.948 u', '1.784 g/L', '-189.34 °C', '-185.85 °C'],
+            ['K', 'Potassium', 'Kalium', CAT.ALKALI_METAL, 1, 4, '39.098 u', '0.862 g/cm³', '63.55 °C', '758.85 °C'],
+            ['Ca', 'Calcium', 'Kalsium', CAT.ALKALINE_EARTH, 2, 4, '40.078 u', '1.55 g/cm³', '841.85 °C', '1483.85 °C'],
+            ['Sc', 'Scandium', 'Skandium', CAT.TRANSITION, 3, 4, '44.956 u', '2.985 g/cm³', '1540.85 °C', '2835.85 °C'],
+            ['Ti', 'Titanium', 'Titanium', CAT.TRANSITION, 4, 4, '47.867 u', '4.506 g/cm³', '1667.85 °C', '3286.85 °C'],
+            ['V', 'Vanadium', 'Vanadium', CAT.TRANSITION, 5, 4, '50.941 u', '6.0 g/cm³', '1909.85 °C', '3406.85 °C'],
+            ['Cr', 'Chromium', 'Kromium', CAT.TRANSITION, 6, 4, '51.996 u', '7.19 g/cm³', '1906.85 °C', '2670.85 °C'],
+            ['Mn', 'Manganese', 'Mangan', CAT.TRANSITION, 7, 4, '54.938 u', '7.21 g/cm³', '1245.85 °C', '2060.85 °C'],
+            ['Fe', 'Iron', 'Besi', CAT.TRANSITION, 8, 4, '55.845 u', '7.874 g/cm³', '1537.85 °C', '2860.85 °C'],
+            ['Co', 'Cobalt', 'Kobalt', CAT.TRANSITION, 9, 4, '58.933 u', '8.9 g/cm³', '1494.85 °C', '2926.85 °C'],
+            ['Ni', 'Nickel', 'Nikel', CAT.TRANSITION, 10, 4, '58.693 u', '8.908 g/cm³', '1454.85 °C', '2729.85 °C'],
+            ['Cu', 'Copper', 'Tembaga', CAT.TRANSITION, 11, 4, '63.546 u', '8.96 g/cm³', '1084.62 °C', '2561.85 °C'],
+            ['Zn', 'Zinc', 'Seng', CAT.TRANSITION, 12, 4, '65.38 u', '7.14 g/cm³', '419.53 °C', '907 °C'],
+            ['Ga', 'Gallium', 'Galium', CAT.POST_TRANSITION, 13, 4, '69.723 u', '5.91 g/cm³', '29.76 °C', '2204 °C'],
+            ['Ge', 'Germanium', 'Germanium', CAT.METALLOID, 14, 4, '72.630 u', '5.323 g/cm³', '938.25 °C', '2833 °C'],
+            ['As', 'Arsenic', 'Arsenik', CAT.METALLOID, 15, 4, '74.922 u', '5.727 g/cm³', '817 °C', '614 °C (SUBLIMES)'],
+            ['Se', 'Selenium', 'Selenium', CAT.NONMETAL, 16, 4, '78.971 u', '4.81 g/cm³', '221 °C', '685 °C'],
+            ['Br', 'Bromine', 'Bromin', CAT.HALOGEN, 17, 4, '79.904 u', '3.12 g/cm³', '-7.2 °C', '58.8 °C'],
+            ['Kr', 'Krypton', 'Kripton', CAT.NOBLE_GAS, 18, 4, '83.798 u', '3.75 g/L', '-157.36 °C', '-153.22 °C'],
+            ['Rb', 'Rubidium', 'Rubidium', CAT.ALKALI_METAL, 1, 5, '85.467 u', '1.532 g/cm³', '39.3 °C', '688 °C'],
+            ['Sr', 'Strontium', 'Stronsium', CAT.ALKALINE_EARTH, 2, 5, '87.62 u', '2.63 g/cm³', '777 °C', '1382 °C'],
+            ['Y', 'Yttrium', 'Itrium', CAT.TRANSITION, 3, 5, '88.906 u', '4.47 g/cm³', '1522 °C', '3338 °C'],
+            ['Zr', 'Zirconium', 'Zirkonium', CAT.TRANSITION, 4, 5, '91.224 u', '6.52 g/cm³', '1855 °C', '4409 °C'],
+            ['Nb', 'Niobium', 'Niobium', CAT.TRANSITION, 5, 5, '92.906 u', '8.57 g/cm³', '2477 °C', '4744 °C'],
+            ['Mo', 'Molybdenum', 'Molibdenum', CAT.TRANSITION, 6, 5, '95.95 u', '10.28 g/cm³', '2623 °C', '4639 °C'],
+            ['Tc', 'Technetium', 'Teknesium', CAT.TRANSITION, 7, 5, '98 u', '11.5 g/cm³', '2157 °C', '4265 °C'],
+            ['Ru', 'Ruthenium', 'Rutenium', CAT.TRANSITION, 8, 5, '101.07 u', '12.37 g/cm³', '2334 °C', '4150 °C'],
+            ['Rh', 'Rhodium', 'Rodium', CAT.TRANSITION, 9, 5, '102.91 u', '12.45 g/cm³', '1964 °C', '3695 °C'],
+            ['Pd', 'Palladium', 'Paladium', CAT.TRANSITION, 10, 5, '106.42 u', '12.02 g/cm³', '1554.9 °C', '2963 °C'],
+            ['Ag', 'Silver', 'Perak', CAT.TRANSITION, 11, 5, '107.87 u', '10.49 g/cm³', '961.78 °C', '2162 °C'],
+            ['Cd', 'Cadmium', 'Kadmium', CAT.TRANSITION, 12, 5, '112.41 u', '8.65 g/cm³', '321.07 °C', '767 °C'],
+            ['In', 'Indium', 'Indium', CAT.POST_TRANSITION, 13, 5, '114.82 u', '7.31 g/cm³', '156.6 °C', '2072 °C'],
+            ['Sn', 'Tin', 'Timah', CAT.POST_TRANSITION, 14, 5, '118.71 u', '7.287 g/cm³', '231.93 °C', '2602 °C'],
+            ['Sb', 'Antimony', 'Antimon', CAT.METALLOID, 15, 5, '121.76 u', '6.697 g/cm³', '630.63 °C', '1587 °C'],
+            ['Te', 'Tellurium', 'Telurium', CAT.METALLOID, 16, 5, '127.6 u', '6.24 g/cm³', '449.51 °C', '988 °C'],
+            ['I', 'Iodine', 'Yodium', CAT.HALOGEN, 17, 5, '126.90 u', '4.93 g/cm³', '113.7 °C', '184.3 °C'],
+            ['Xe', 'Xenon', 'Xenon', CAT.NOBLE_GAS, 18, 5, '131.29 u', '5.89 g/L', '-111.7 °C', '-108.12 °C'],
+            ['Cs', 'Caesium', 'Sesium', CAT.ALKALI_METAL, 1, 6, '132.91 u', '1.93 g/cm³', '28.5 °C', '671 °C'],
+            ['Ba', 'Barium', 'Barium', CAT.ALKALINE_EARTH, 2, 6, '137.33 u', '3.51 g/cm³', '727 °C', '1897 °C'],
+            ['La', 'Lanthanum', 'Lantanum', CAT.LANTHANIDE, 3, 6, '138.91 u', '6.15 g/cm³', '920 °C', '3464 °C'],
+            ['Ce', 'Cerium', 'Serium', CAT.LANTHANIDE, 4, 9, '140.12 u', '6.77 g/cm³', '795 °C', '3443 °C'],
+            ['Pr', 'Praseodymium', 'Praseodimium', CAT.LANTHANIDE, 5, 9, '140.91 u', '6.77 g/cm³', '931 °C', '3520 °C'],
+            ['Nd', 'Neodymium', 'Neodimium', CAT.LANTHANIDE, 6, 9, '144.24 u', '7.01 g/cm³', '1024 °C', '3074 °C'],
+            ['Pm', 'Promethium', 'Prometium', CAT.LANTHANIDE, 7, 9, '145 u', '7.26 g/cm³', '1042 °C', '3000 °C'],
+            ['Sm', 'Samarium', 'Samarium', CAT.LANTHANIDE, 8, 9, '150.36 u', '7.52 g/cm³', '1072 °C', '1794 °C'],
+            ['Eu', 'Europium', 'Europium', CAT.LANTHANIDE, 9, 9, '151.96 u', '5.24 g/cm³', '822 °C', '1529 °C'],
+            ['Gd', 'Gadolinium', 'Gadolinium', CAT.LANTHANIDE, 10, 9, '157.25 u', '7.9 g/cm³', '1312 °C', '3273 °C'],
+            ['Tb', 'Terbium', 'Terbium', CAT.LANTHANIDE, 11, 9, '158.93 u', '8.23 g/cm³', '1356 °C', '3230 °C'],
+            ['Dy', 'Dysprosium', 'Disprosium', CAT.LANTHANIDE, 12, 9, '162.5 u', '8.54 g/cm³', '1407 °C', '2562 °C'],
+            ['Ho', 'Holmium', 'Holmium', CAT.LANTHANIDE, 13, 9, '164.93 u', '8.8 g/cm³', '1470 °C', '2720 °C'],
+            ['Er', 'Erbium', 'Erbium', CAT.LANTHANIDE, 14, 9, '167.26 u', '9.07 g/cm³', '1529 °C', '2868 °C'],
+            ['Tm', 'Thulium', 'Tulium', CAT.LANTHANIDE, 15, 9, '168.93 u', '9.32 g/cm³', '1545 °C', '1950 °C'],
+            ['Yb', 'Ytterbium', 'Iterbium', CAT.LANTHANIDE, 16, 9, '173.05 u', '6.9 g/cm³', '824 °C', '1196 °C'],
+            ['Lu', 'Lutetium', 'Lutesium', CAT.LANTHANIDE, 17, 9, '174.97 u', '9.84 g/cm³', '1652 °C', '3402 °C'],
+            ['Hf', 'Hafnium', 'Hafnium', CAT.TRANSITION, 4, 6, '178.49 u', '13.31 g/cm³', '2233 °C', '4603 °C'],
+            ['Ta', 'Tantalum', 'Tantalum', CAT.TRANSITION, 5, 6, '180.95 u', '16.69 g/cm³', '3017 °C', '5458 °C'],
+            ['W', 'Tungsten', 'Wolfram', CAT.TRANSITION, 6, 6, '183.84 u', '19.25 g/cm³', '3422 °C', '5555 °C'],
+            ['Re', 'Rhenium', 'Renium', CAT.TRANSITION, 7, 6, '186.21 u', '21.02 g/cm³', '3186 °C', '5596 °C'],
+            ['Os', 'Osmium', 'Osmium', CAT.TRANSITION, 8, 6, '190.23 u', '22.59 g/cm³', '3033 °C', '5012 °C'],
+            ['Ir', 'Iridium', 'Iridium', CAT.TRANSITION, 9, 6, '192.22 u', '22.56 g/cm³', '2446 °C', '4428 °C'],
+            ['Pt', 'Platinum', 'Platina', CAT.TRANSITION, 10, 6, '195.08 u', '21.45 g/cm³', '1768.3 °C', '3825 °C'],
+            ['Au', 'Gold', 'Emas', CAT.TRANSITION, 11, 6, '196.97 u', '19.3 g/cm³', '1064.18 °C', '2856 °C'],
+            ['Hg', 'Mercury', 'Raksa', CAT.TRANSITION, 12, 6, '200.59 u', '13.534 g/cm³', '-38.83 °C', '356.73 °C'],
+            ['Tl', 'Thallium', 'Talium', CAT.POST_TRANSITION, 13, 6, '204.38 u', '11.85 g/cm³', '304 °C', '1473 °C'],
+            ['Pb', 'Lead', 'Timbal', CAT.POST_TRANSITION, 14, 6, '207.2 u', '11.34 g/cm³', '327.46 °C', '1749 °C'],
+            ['Bi', 'Bismuth', 'Bismut', CAT.POST_TRANSITION, 15, 6, '208.98 u', '9.78 g/cm³', '271.3 °C', '1564 °C'],
+            ['Po', 'Polonium', 'Polonium', CAT.METALLOID, 16, 6, '209 u', '9.196 g/cm³', '254 °C', '962 °C'],
+            ['At', 'Astatine', 'Astatin', CAT.HALOGEN, 17, 6, '210 u', 'N/A', '302 °C', '337 °C'],
+            ['Rn', 'Radon', 'Radon', CAT.NOBLE_GAS, 18, 6, '222 u', '9.73 g/L', '-71 °C', '-61.7 °C'],
+            ['Fr', 'Francium', 'Fransium', CAT.ALKALI_METAL, 1, 7, '223 u', 'N/A', '27 °C', '677 °C'],
+            ['Ra', 'Radium', 'Radium', CAT.ALKALINE_EARTH, 2, 7, '226 u', '5.5 g/cm³', '700 °C', '1737 °C'],
+            ['Ac', 'Actinium', 'Aktinium', CAT.ACTINIDE, 3, 7, '227 u', '10.07 g/cm³', '1050 °C', '3198 °C'],
+            ['Th', 'Thorium', 'Torium', CAT.ACTINIDE, 4, 10, '232.04 u', '11.72 g/cm³', '1750 °C', '4788 °C'],
+            ['Pa', 'Protactinium', 'Protaktinium', CAT.ACTINIDE, 5, 10, '231.04 u', '15.37 g/cm³', '1568 °C', '4027 °C'],
+            ['U', 'Uranium', 'Uranium', CAT.ACTINIDE, 6, 10, '238.03 u', '19.1 g/cm³', '1132.2 °C', '4131 °C'],
+            ['Np', 'Neptunium', 'Neptunium', CAT.ACTINIDE, 7, 10, '237 u', '20.25 g/cm³', '639 °C', '3902 °C'],
+            ['Pu', 'Plutonium', 'Plutonium', CAT.ACTINIDE, 8, 10, '244 u', '19.816 g/cm³', '639.4 °C', '3228 °C'],
+            ['Am', 'Americium', 'Amerisium', CAT.ACTINIDE, 9, 10, '243 u', '13.67 g/cm³', '1176 °C', '2607 °C'],
+            ['Cm', 'Curium', 'Kurium', CAT.ACTINIDE, 10, 10, '247 u', '13.51 g/cm³', '1340 °C', '3110 °C'],
+            ['Bk', 'Berkelium', 'Berkelium', CAT.ACTINIDE, 11, 10, '247 u', '14.78 g/cm³', '986 °C', '2627 °C'],
+            ['Cf', 'Californium', 'Kalifornium', CAT.ACTINIDE, 12, 10, '251 u', '15.1 g/cm³', '900 °C', '1470 °C'],
+            ['Es', 'Einsteinium', 'Einsteinium', CAT.ACTINIDE, 13, 10, '252 u', '8.84 g/cm³', '860 °C', '996 °C'],
+            ['Fm', 'Fermium', 'Fermium', CAT.ACTINIDE, 14, 10, '257 u', 'N/A', '1527 °C', 'N/A'],
+            ['Md', 'Mendelevium', 'Mendelevium', CAT.ACTINIDE, 15, 10, '258 u', 'N/A', '827 °C', 'N/A'],
+            ['No', 'Nobelium', 'Nobelium', CAT.ACTINIDE, 16, 10, '259 u', 'N/A', '827 °C', 'N/A'],
+            ['Lr', 'Lawrencium', 'Lawrensium', CAT.ACTINIDE, 17, 10, '262 u', 'N/A', '1627 °C', 'N/A'],
+            ['Rf', 'Rutherfordium', 'Ruterfordium', CAT.TRANSITION, 4, 7, '267 u', 'N/A', 'N/A', 'N/A'],
+            ['Db', 'Dubnium', 'Dubnium', CAT.TRANSITION, 5, 7, '268 u', 'N/A', 'N/A', 'N/A'],
+            ['Sg', 'Seaborgium', 'Seaborgium', CAT.TRANSITION, 6, 7, '269 u', 'N/A', 'N/A', 'N/A'],
+            ['Bh', 'Bohrium', 'Borium', CAT.TRANSITION, 7, 7, '270 u', 'N/A', 'N/A', 'N/A'],
+            ['Hs', 'Hassium', 'Hasium', CAT.TRANSITION, 8, 7, '277 u', 'N/A', 'N/A', 'N/A'],
+            ['Mt', 'Meitnerium', 'Meitnerium', CAT.TRANSITION, 9, 7, '278 u', 'N/A', 'N/A', 'N/A'],
+            ['Ds', 'Darmstadtium', 'Darmstadtium', CAT.TRANSITION, 10, 7, '281 u', 'N/A', 'N/A', 'N/A'],
+            ['Rg', 'Roentgenium', 'Rontgenium', CAT.TRANSITION, 11, 7, '282 u', 'N/A', 'N/A', 'N/A'],
+            ['Cn', 'Copernicium', 'Kopernisium', CAT.TRANSITION, 12, 7, '285 u', 'N/A', 'N/A', 'N/A'],
+            ['Nh', 'Nihonium', 'Nihonium', CAT.POST_TRANSITION, 13, 7, '286 u', 'N/A', 'N/A', 'N/A'],
+            ['Fl', 'Flerovium', 'Flerovium', CAT.POST_TRANSITION, 14, 7, '289 u', 'N/A', 'N/A', 'N/A'],
+            ['Mc', 'Moscovium', 'Moskovium', CAT.POST_TRANSITION, 15, 7, '290 u', 'N/A', 'N/A', 'N/A'],
+            ['Lv', 'Livermorium', 'Livermorium', CAT.POST_TRANSITION, 16, 7, '293 u', 'N/A', 'N/A', 'N/A'],
+            ['Ts', 'Tennessine', 'Tenesin', CAT.HALOGEN, 17, 7, '294 u', 'N/A', 'N/A', 'N/A'],
+            ['Og', 'Oganesson', 'Oganeson', CAT.NOBLE_GAS, 18, 7, '294 u', 'N/A', 'N/A', 'N/A']
+        ];
+
+        const ELEMENTS = ELEMENT_ROWS.map(([symbol, nameEn, nameId, category, col, row, mass, density, melting, boiling]) => ({
+            symbol, name: { EN: nameEn, ID: nameId }, category, col, row, mass, density, melting, boiling
+        }));
+        const TOTAL = ELEMENTS.length;
+
+        /* ------------------------------------------------------------------
+         * Localization
+         * ------------------------------------------------------------------ */
+
+        const I18N = {
+            EN: {
+                menu: 'Menu', close: 'Close',
+                layout: 'LAYOUT', table: 'Table', sphere: 'Sphere', helix: 'Helix', grid: 'Grid',
+                language: 'LANGUAGE',
+                hintKey: 'HOLD 0.5s', hintRest: 'on element for details',
+                mass: 'Atomic Mass:', density: 'Density:', melting: 'Melting Point:', boiling: 'Boiling Point:',
+                sublimes: 'Sublimes'
+            },
+            ID: {
+                menu: 'Menu', close: 'Tutup',
+                layout: 'TATA LETAK', table: 'Tabel', sphere: 'Bola', helix: 'Spiral', grid: 'Kisi',
+                language: 'BAHASA',
+                hintKey: 'TAHAN 0.5s', hintRest: 'di unsur untuk detail',
+                mass: 'Massa Atom:', density: 'Massa Jenis:', melting: 'Titik Leleh:', boiling: 'Titik Didih:',
+                sublimes: 'Menyublim'
+            }
+        };
+
+        let currentLanguage = 'EN';
+        const t = key => I18N[currentLanguage][key];
+        const localizeValue = value => value.replace('SUBLIMES', t('sublimes'));
+
+        /* ------------------------------------------------------------------
+         * DOM references and shared state
+         * ------------------------------------------------------------------ */
+
+        const container = document.getElementById('scene-content');
+        const sceneEl = document.getElementById('scene');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const dropdownWrap = document.getElementById('dropdownWrapper');
+        const backdrop = document.getElementById('backdrop');
+        const closeBtn = document.getElementById('closeBtn');
+        const langToggle = document.getElementById('langToggle');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalCard = document.getElementById('modal-card');
+        const rootStyle = document.documentElement.style;
+
+        const cards = [];   // { dom, titleEl, current: { x, y, z, rx, ry, rz } }
+        const layouts = { table: [], sphere: [], helix: [], grid: [] };
+
+        let currentLayout = '';
+        let isMenuOpen = false;
+
+        // Camera state (mirrored into CSS custom properties by the render loop).
+        let camX = 0, camY = 0, camZ = -2600, rotX = 0, rotY = 0;
+        let isRotating = false, isPanning = false, prevX = 0, prevY = 0, prevPinch = 0;
+        let camTween = null;
+        let cameraNeedsUpdate = true;
+        let hoverDirty = false;
+
+        /* ------------------------------------------------------------------
+         * Menu
+         * ------------------------------------------------------------------ */
+
+        function openMenu() {
+            isMenuOpen = true;
+            hamburgerBtn.classList.add('active');
+            hamburgerBtn.setAttribute('aria-expanded', 'true');
+            dropdownWrap.classList.add('open');
+            backdrop.classList.add('active');
+        }
+
+        function closeMenu() {
+            isMenuOpen = false;
+            hamburgerBtn.classList.remove('active');
+            hamburgerBtn.setAttribute('aria-expanded', 'false');
+            dropdownWrap.classList.remove('open');
+            backdrop.classList.remove('active');
+        }
+
+        const closeMenuSoon = () => { if (isMenuOpen) setTimeout(closeMenu, 250); };
+
+        hamburgerBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            isMenuOpen ? closeMenu() : openMenu();
+        });
+        backdrop.addEventListener('click', closeMenu);
+        closeBtn.addEventListener('click', closeMenu);
+
+        /* ------------------------------------------------------------------
+         * Language
+         * ------------------------------------------------------------------ */
+
+        function setLang(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang.toLowerCase();
+            langToggle.classList.toggle('id-active', lang === 'ID');
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                const active = btn.dataset.lang === lang;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-pressed', String(active));
+            });
+            document.querySelectorAll('[data-i18n]').forEach(node => { node.textContent = t(node.dataset.i18n); });
+            document.querySelectorAll('[data-i18n-label]').forEach(node => { node.setAttribute('aria-label', t(node.dataset.i18nLabel)); });
+
+            cards.forEach((card, i) => { card.titleEl.textContent = ELEMENTS[i].name[lang]; });
+            closeMenuSoon();
+        }
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => setLang(btn.dataset.lang));
+        });
+
+        /* ------------------------------------------------------------------
+         * Element cards
+         * ------------------------------------------------------------------ */
+
+        function createText(tag, className, text) {
+            const node = document.createElement(tag);
+            node.className = className;
+            node.textContent = text;
+            return node;
+        }
+
+        ELEMENTS.forEach((data, i) => {
+            const dom = document.createElement('div');
+            dom.className = 'element';
+            dom.style.setProperty('--color-rgb', `var(--c-${data.category})`);
+
+            const titleEl = createText('div', 'element-title', data.name.EN);
+            dom.append(createText('div', 'element-number', i + 1), createText('div', 'element-symbol', data.symbol), titleEl);
+
+            container.appendChild(dom);
+            cards.push({ dom, titleEl, current: { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 } });
+        });
+
+        /* ------------------------------------------------------------------
+         * Layouts
+         * ------------------------------------------------------------------ */
+
+        const TABLE_CELL_W = 150;
+        const TABLE_CELL_H = 190;
+        const SPHERE_RADIUS = 1250;
+        const HELIX_RADIUS = 1150;
+        const HELIX_STEP_ANGLE = 0.3;   // radians between consecutive cards
+        const HELIX_STEP_RISE = 13;     // vertical px between consecutive cards
+        const GRID_SIZE = 5;            // cards per row/column in one grid layer
+        const GRID_SPACING = 400;
+        const GRID_LAYER_GAP = 700;
+
+        ELEMENTS.forEach((data, i) => {
+            // Table: columns 1-18 and rows 1-10 (rows 9-10 hold the f-block), centred on the origin.
+            layouts.table.push({
+                x: (data.col - 9.5) * TABLE_CELL_W,
+                y: (data.row - 5.5) * TABLE_CELL_H,
+                z: 0, rx: 0, ry: 0, rz: 0
+            });
+
+            // Sphere: spiral point distribution, with each card facing outward.
+            const phi = Math.acos(-1 + (2 * i) / TOTAL);
+            const theta = Math.sqrt(TOTAL * Math.PI) * phi;
+            const sx = SPHERE_RADIUS * Math.cos(theta) * Math.sin(phi);
+            const sy = SPHERE_RADIUS * Math.cos(phi);
+            const sz = SPHERE_RADIUS * Math.sin(theta) * Math.sin(phi);
+            layouts.sphere.push({
+                x: sx, y: sy, z: sz,
+                rx: Math.atan2(-sy, Math.hypot(sx, sz)),
+                ry: Math.atan2(sx, sz),
+                rz: 0
+            });
+
+            // Helix: a single strand that climbs one step per card.
+            const angle = i * HELIX_STEP_ANGLE + Math.PI;
+            layouts.helix.push({
+                x: HELIX_RADIUS * Math.sin(angle),
+                y: -(i * HELIX_STEP_RISE) + ((TOTAL - 1) * HELIX_STEP_RISE) / 2,
+                z: HELIX_RADIUS * Math.cos(angle),
+                rx: 0, ry: angle, rz: 0
+            });
+
+            // Grid: stacked 5x5 layers. Each layer is offset so that cards in the back
+            // layers are not completely hidden behind the front layer.
+            const layer = Math.floor(i / (GRID_SIZE * GRID_SIZE));
+            layouts.grid.push({
+                x: (i % GRID_SIZE) * GRID_SPACING - 800 + ((layer * 170) % GRID_SPACING),
+                y: -(Math.floor(i / GRID_SIZE) % GRID_SIZE) * GRID_SPACING + 800 + ((layer * 230) % GRID_SPACING),
+                z: layer * GRID_LAYER_GAP - 1400,
+                rx: 0, ry: 0, rz: 0
+            });
+        });
+
+        function applyCardTransforms() {
+            for (const { dom, current: c } of cards) {
+                dom.style.transform = `translate3d(${c.x}px, ${c.y}px, ${c.z}px) rotateY(${c.ry}rad) rotateX(${c.rx}rad) rotateZ(${c.rz}rad)`;
+            }
+        }
+
+        function transformTo(layoutName) {
+            if (currentLayout === layoutName) { closeMenuSoon(); return; }
+
+            document.querySelectorAll('.layout-item').forEach(item => {
+                const selected = item.dataset.layout === layoutName;
+                item.classList.toggle('selected', selected);
+                item.setAttribute('aria-pressed', String(selected));
+            });
+
+            const target = layouts[layoutName];
+            anime.remove(cards.map(c => c.current));   // avoid fighting tweens when switching quickly
+            anime({
+                targets: cards.map(c => c.current),
+                x: (_, i) => target[i].x, y: (_, i) => target[i].y, z: (_, i) => target[i].z,
+                rx: (_, i) => target[i].rx, ry: (_, i) => target[i].ry, rz: (_, i) => target[i].rz,
+                duration: 2000,
+                easing: 'easeOutCubic',
+                delay: anime.stagger(12, { easing: 'easeOutQuad' }),
+                update: () => { hoverDirty = true; applyCardTransforms(); }
+            });
+
+            resetCamera(layoutName);
+            currentLayout = layoutName;
+            closeMenuSoon();
+        }
+
+        document.querySelectorAll('.layout-item').forEach(item => {
+            item.addEventListener('click', () => transformTo(item.dataset.layout));
+        });
+
+        /* ------------------------------------------------------------------
+         * Detail modal
+         * ------------------------------------------------------------------ */
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            modalOverlay.setAttribute('aria-hidden', 'true');
+        }
+
+        function showModal(i) {
+            const data = ELEMENTS[i];
+            document.getElementById('m-sym').textContent = data.symbol;
+            document.getElementById('m-num').textContent = i + 1;
+            document.getElementById('m-name').textContent = data.name[currentLanguage];
+            document.getElementById('m-mass').textContent = data.mass;
+            document.getElementById('m-den').textContent = data.density;
+            document.getElementById('m-melt').textContent = localizeValue(data.melting);
+            document.getElementById('m-boil').textContent = localizeValue(data.boiling);
+
+            modalCard.style.setProperty('--modal-color', `var(--c-${data.category})`);
+            modalOverlay.classList.add('active');
+            modalOverlay.setAttribute('aria-hidden', 'false');
+        }
+
+        modalOverlay.addEventListener('click', closeModal);
+        modalCard.addEventListener('click', e => e.stopPropagation());
+        document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            closeModal();
+            if (isMenuOpen) closeMenu();
+        });
+
+        /* ------------------------------------------------------------------
+         * Picking engine
+         *
+         * Native hit-testing on CSS 3D elements has no tolerance: small, distant or
+         * partially covered cards are hard to hit. Instead, every card is projected
+         * manually (camera -> rotator -> card transform, in the same order CSS applies
+         * them) and the pointer ray is intersected with each card plane. The front-most
+         * card under the pointer wins; if none is hit, the nearest card within a
+         * tolerance radius is used (minimum target size: 28px mouse / 44px touch).
+         * ------------------------------------------------------------------ */
+
+        const PERSP = parseFloat(getComputedStyle(document.body).perspective) || 1200;
+        const rootCS = getComputedStyle(document.documentElement);
+        const EL_W = parseFloat(rootCS.getPropertyValue('--w')) || 130;
+        const EL_H = parseFloat(rootCS.getPropertyValue('--h')) || 170;
+        const NEAR_CLIP = 60;   // cards closer than this to the camera plane are ignored
+        const UI_SELECTOR = '#modal-overlay, #dropdownWrapper, #hamburgerBtn';
+
+        const isUiEvent = e =>
+            isMenuOpen || modalOverlay.classList.contains('active') ||
+            !!(e.target && e.target.closest && e.target.closest(UI_SELECTOR));
+
+        function makeCam() {
+            const rx = rotX * Math.PI / 180, ry = rotY * Math.PI / 180;
+            return { tx: camX, ty: camY, tz: camZ, sinX: Math.sin(rx), cosX: Math.cos(rx), sinY: Math.sin(ry), cosY: Math.cos(ry) };
+        }
+
+        // Transforms the card-local point (lx, ly, 0) into camera space.
+        function toView(c, lx, ly, cam, out) {
+            let x = lx, y = ly, z = 0, tmp;
+            const sZ = Math.sin(c.rz), cZ = Math.cos(c.rz);
+            const sX = Math.sin(c.rx), cX = Math.cos(c.rx);
+            const sY = Math.sin(c.ry), cY = Math.cos(c.ry);
+            tmp = x * cZ - y * sZ; y = x * sZ + y * cZ; x = tmp;                         // card rotateZ
+            tmp = y * cX - z * sX; z = y * sX + z * cX; y = tmp;                         // card rotateX
+            tmp = x * cY + z * sY; z = -x * sY + z * cY; x = tmp;                        // card rotateY
+            x += c.x; y += c.y; z += c.z;                                                // card translate3d
+            tmp = x * cam.cosY + z * cam.sinY; z = -x * cam.sinY + z * cam.cosY; x = tmp; // #scene-rotator rotateY
+            tmp = y * cam.cosX - z * cam.sinX; z = y * cam.sinX + z * cam.cosX; y = tmp;  // #scene-rotator rotateX
+            out[0] = x + cam.tx; out[1] = y + cam.ty; out[2] = z + cam.tz;               // #scene-camera translate3d
+            return out;
+        }
+
+        // Perspective origin (viewport centre) and the scene anchor's offset from it.
+        function viewMetrics() {
+            const b = document.body.getBoundingClientRect(), r = sceneEl.getBoundingClientRect();
+            const px = b.left + b.width / 2, py = b.top + b.height / 2;
+            return { px, py, offX: (r.left + r.width / 2) - px, offY: (r.top + r.height / 2) - py };
+        }
+
+        // Distance from point (u, v) to a convex quad; 0 when the point is inside.
+        function distToQuad(p, u, v) {
+            let inside = true, sign = 0, min = Infinity;
+            for (let k = 0; k < 4; k++) {
+                const a = p[k], b = p[(k + 1) % 4], dx = b[0] - a[0], dy = b[1] - a[1];
+                const cross = dx * (v - a[1]) - dy * (u - a[0]);
+                if (cross !== 0) {
+                    const s = cross > 0 ? 1 : -1;
+                    if (sign === 0) sign = s; else if (s !== sign) inside = false;
+                }
+                const len2 = dx * dx + dy * dy;
+                let r = len2 ? ((u - a[0]) * dx + (v - a[1]) * dy) / len2 : 0;
+                r = Math.max(0, Math.min(1, r));
+                min = Math.min(min, Math.hypot(a[0] + r * dx - u, a[1] + r * dy - v));
+            }
+            return inside ? 0 : min;
+        }
+
+        // Projects a card's four corners to screen space (relative to the perspective origin).
+        function projectQuad(c, cam, vm) {
+            const hw = EL_W / 2, hh = EL_H / 2, tmp = [0, 0, 0], pts = [];
+            for (const [lx, ly] of [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]]) {
+                toView(c, lx, ly, cam, tmp);
+                const X = tmp[0] + vm.offX, Y = tmp[1] + vm.offY, Z = tmp[2];
+                if (Z >= PERSP - NEAR_CLIP) return null;
+                const s = PERSP / (PERSP - Z);
+                pts.push([X * s, Y * s]);
+            }
+            return pts;
+        }
+
+        /** Returns the index of the card under (or nearest to) the pointer, or -1. */
+        function pickElement(clientX, clientY, opt) {
+            const vm = viewMetrics(), cam = makeCam(), d = PERSP, hw = EL_W / 2, hh = EL_H / 2;
+            const u = clientX - vm.px, v = clientY - vm.py;
+            const O = [0, 0, 0], A = [0, 0, 0], B = [0, 0, 0];
+            let hit = -1, hitZ = -Infinity;
+
+            // Pass 1: exact ray / card-plane intersection, keeping the front-most hit.
+            for (let i = 0; i < TOTAL; i++) {
+                const c = cards[i].current;
+                toView(c, 0, 0, cam, O); toView(c, 1, 0, cam, A); toView(c, 0, 1, cam, B);
+                const Cx = O[0] + vm.offX, Cy = O[1] + vm.offY, Cz = O[2];
+                if (Cz >= d - NEAR_CLIP) continue;
+                const ex = [A[0] - O[0], A[1] - O[1], A[2] - O[2]];
+                const ey = [B[0] - O[0], B[1] - O[1], B[2] - O[2]];
+                const n = [ex[1] * ey[2] - ex[2] * ey[1], ex[2] * ey[0] - ex[0] * ey[2], ex[0] * ey[1] - ex[1] * ey[0]];
+                const nu = n[0] * u + n[1] * v, den = n[2] - nu / d;
+                if (Math.abs(den) < 1e-9) continue;   // card is edge-on to the camera
+                const Z = (n[0] * Cx + n[1] * Cy + n[2] * Cz - nu) / den;
+                if (Z >= d - NEAR_CLIP) continue;
+                const k = 1 - Z / d, Px = u * k - Cx, Py = v * k - Cy, Pz = Z - Cz;
+                const lx = Px * ex[0] + Py * ex[1] + Pz * ex[2];
+                const ly = Px * ey[0] + Py * ey[1] + Pz * ey[2];
+                if (Math.abs(lx) <= hw && Math.abs(ly) <= hh && Z > hitZ) { hitZ = Z; hit = i; }
+            }
+            if (hit >= 0) return hit;
+
+            // Pass 2: no exact hit, so accept the nearest card within the tolerance radius.
+            let near = -1, nearDist = Infinity;
+            for (let i = 0; i < TOTAL; i++) {
+                const q = projectQuad(cards[i].current, cam, vm);
+                if (!q) continue;
+                const size = Math.min(
+                    Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]),
+                    Math.hypot(q[2][0] - q[1][0], q[2][1] - q[1][1])
+                );
+                const slack = Math.max(opt.tol, opt.minTarget / 2 - size / 2);
+                const dist = distToQuad(q, u, v);
+                if (dist <= slack && dist < nearDist) { nearDist = dist; near = i; }
+            }
+            return near;
+        }
+
+        const TOUCH_OPT = { tol: 10, minTarget: 44 };
+        const MOUSE_OPT = { tol: 6, minTarget: 28 };
+
+        /* ------------------------------------------------------------------
+         * Hover (mouse)
+         * ------------------------------------------------------------------ */
+
+        let hoverIdx = -1, lastMouse = null, hoverRaf = 0;
+
+        function setHover(idx) {
+            if (idx === hoverIdx) return;
+            if (hoverIdx >= 0) cards[hoverIdx].dom.classList.remove('hot');
+            if (idx >= 0) cards[idx].dom.classList.add('hot');
+            document.body.classList.toggle('over-element', idx >= 0);
+            hoverIdx = idx;
+        }
+
+        function updateHover() {
+            hoverRaf = 0;
+            if (!lastMouse || lastMouse.buttons || isUiEvent(lastMouse)) { setHover(-1); return; }
+            setHover(pickElement(lastMouse.clientX, lastMouse.clientY, MOUSE_OPT));
+        }
+
+        document.addEventListener('pointermove', e => {
+            if (e.pointerType !== 'mouse') return;
+            lastMouse = { clientX: e.clientX, clientY: e.clientY, buttons: e.buttons, target: e.target };
+            if (!hoverRaf) hoverRaf = requestAnimationFrame(updateHover);
+        }, { passive: true });
+        document.documentElement.addEventListener('mouseleave', () => { lastMouse = null; setHover(-1); });
+
+        /* ------------------------------------------------------------------
+         * Press and hold to open the detail modal
+         * ------------------------------------------------------------------ */
+
+        const HOLD_MS = 500;
+        let press = null;
+
+        function cancelPress() {
+            if (!press) return;
+            clearTimeout(press.timer);
+            cards[press.idx].dom.classList.remove('pressing');
+            press = null;
+        }
+
+        function openElement(i) {
+            isRotating = false;
+            isPanning = false;
+            showModal(i);
+        }
+
+        document.addEventListener('pointerdown', e => {
+            if (!e.isPrimary) { cancelPress(); return; }   // a second finger (pinch) cancels the hold
+            cancelPress();
+            if (isUiEvent(e) || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            if (camTween) camTween.pause();                // user input interrupts the camera animation
+
+            const touch = e.pointerType !== 'mouse';
+            const idx = pickElement(e.clientX, e.clientY, touch ? TOUCH_OPT : MOUSE_OPT);
+            if (idx < 0) return;
+
+            cards[idx].dom.classList.add('pressing');
+            press = {
+                idx, id: e.pointerId, x: e.clientX, y: e.clientY,
+                maxMove: touch ? 14 : 6,   // fingers wobble more than a mouse
+                timer: setTimeout(() => {
+                    cancelPress();
+                    if (navigator.vibrate) navigator.vibrate(12);
+                    openElement(idx);
+                }, HOLD_MS)
+            };
+        });
+
+        document.addEventListener('pointermove', e => {
+            if (press && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > press.maxMove) cancelPress();
+        }, { passive: true });
+
+        const endPress = e => { if (press && e.pointerId === press.id) cancelPress(); };
+        document.addEventListener('pointerup', endPress);
+        document.addEventListener('pointercancel', endPress);
+        window.addEventListener('blur', cancelPress);
+
+        /* ------------------------------------------------------------------
+         * Camera
+         * ------------------------------------------------------------------ */
+
+        // Finds the closest camera distance (largest cards) at which the whole layout
+        // fits on screen. A minimum zoom keeps cards large enough to tap; on portrait
+        // phones the table does not fit, so users pan with two fingers.
+        function computeFitZ(layoutName) {
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const marginX = 0.92, marginY = 0.78;
+            const minZ = layoutName === 'grid' ? -3600 : -3000;
+            const hw = EL_W / 2, hh = EL_H / 2, tmp = [0, 0, 0];
+
+            for (let z = -600; z >= -9000; z -= 25) {
+                const cam = { tx: 0, ty: 0, tz: z, sinX: 0, cosX: 1, sinY: 0, cosY: 1 };
+                let fits = true;
+                scan:
+                for (const c of layouts[layoutName]) {
+                    for (const [lx, ly] of [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]]) {
+                        toView(c, lx, ly, cam, tmp);
+                        if (tmp[2] >= PERSP - 150) { fits = false; break scan; }
+                        const s = PERSP / (PERSP - tmp[2]);
+                        if (Math.abs(tmp[0] * s) > vw / 2 * marginX || Math.abs(tmp[1] * s) > vh / 2 * marginY) { fits = false; break scan; }
+                    }
+                }
+                if (fits) return Math.max(z, minZ);
+            }
+            return minZ;
+        }
+
+        function resetCamera(layoutName) {
+            if (camTween) camTween.pause();
+            const state = { cx: camX, cy: camY, cz: camZ, rx: rotX, ry: rotY };
+            camTween = anime({
+                targets: state,
+                cx: 0, cy: 0,
+                cz: computeFitZ(layoutName || currentLayout || 'table'),
+                rx: 0,
+                ry: Math.round(rotY / 360) * 360,   // rotate back via the shortest path
+                duration: 1500,
+                easing: 'easeOutQuad',
+                update: () => {
+                    camX = state.cx; camY = state.cy; camZ = state.cz; rotX = state.rx; rotY = state.ry;
+                    cameraNeedsUpdate = true;
+                }
+            });
+        }
+
+        const clampZoom = z => Math.max(-6000, Math.min(-500, z));
+
+        /* ------------------------------------------------------------------
+         * Mouse and wheel input
+         * ------------------------------------------------------------------ */
+
+        document.addEventListener('contextmenu', e => e.preventDefault());   // right button pans
+
+        document.addEventListener('mousedown', e => {
+            if (isUiEvent(e)) return;
+            if (e.button === 0) isRotating = true;
+            else if (e.button === 2) isPanning = true;
+            prevX = e.clientX;
+            prevY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!isRotating && !isPanning) return;
+            const dX = e.clientX - prevX, dY = e.clientY - prevY;
+            if (isRotating) {
+                rotY += dX * 0.3;
+                rotX = Math.max(-90, Math.min(90, rotX - dY * 0.3));
+            } else {
+                camX += dX * 2.5;
+                camY += dY * 2.5;
+            }
+            cameraNeedsUpdate = true;
+            prevX = e.clientX;
+            prevY = e.clientY;
+        });
+
+        document.addEventListener('mouseup', () => { isRotating = false; isPanning = false; });
+
+        document.addEventListener('wheel', e => {
+            if (isUiEvent(e)) return;
+            if (camTween) camTween.pause();
+            camZ = clampZoom(camZ - e.deltaY * 2);
+            cameraNeedsUpdate = true;
+        }, { passive: true });
+
+        /* ------------------------------------------------------------------
+         * Touch input: one finger rotates, two fingers pan and pinch-zoom
+         * ------------------------------------------------------------------ */
+
+        const pinchDistance = touches => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+        const stopTouchGesture = () => { isRotating = false; isPanning = false; };
+
+        document.addEventListener('touchstart', e => {
+            if (isUiEvent(e)) return;
+            if (e.touches.length === 1) {
+                isRotating = true;
+                isPanning = false;
+                prevX = e.touches[0].clientX;
+                prevY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                isRotating = false;
+                isPanning = true;
+                prevPinch = pinchDistance(e.touches);
+                prevX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                prevY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', e => {
+            if (isUiEvent(e)) return;
+            e.preventDefault();
+            if (isRotating && e.touches.length === 1) {
+                const dX = e.touches[0].clientX - prevX, dY = e.touches[0].clientY - prevY;
+                rotY += dX * 0.4;
+                rotX = Math.max(-90, Math.min(90, rotX - dY * 0.4));
+                prevX = e.touches[0].clientX;
+                prevY = e.touches[0].clientY;
+            } else if (isPanning && e.touches.length === 2) {
+                const pinch = pinchDistance(e.touches);
+                camZ = clampZoom(camZ + (pinch - prevPinch) * 5);
+                prevPinch = pinch;
+                const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                camX += (midX - prevX) * 2.5;
+                camY += (midY - prevY) * 2.5;
+                prevX = midX;
+                prevY = midY;
+            }
+            cameraNeedsUpdate = true;
+        }, { passive: false });
+
+        document.addEventListener('touchend', stopTouchGesture);
+        document.addEventListener('touchcancel', stopTouchGesture);
+
+        /* ------------------------------------------------------------------
+         * Debug overlay (append ?debug to the URL to draw the picking quads)
+         * ------------------------------------------------------------------ */
+
+        const DEBUG = /[?&]debug\b/.test(location.search);
+        let dbgCanvas = null, dbgCtx = null;
+
+        if (DEBUG) {
+            dbgCanvas = document.createElement('canvas');
+            dbgCanvas.id = 'debug-canvas';
+            document.body.appendChild(dbgCanvas);
+            dbgCtx = dbgCanvas.getContext('2d');
+        }
+
+        function drawDebug() {
+            const dpr = window.devicePixelRatio || 1, W = window.innerWidth, H = window.innerHeight;
+            if (dbgCanvas.width !== W * dpr || dbgCanvas.height !== H * dpr) {
+                dbgCanvas.width = W * dpr;
+                dbgCanvas.height = H * dpr;
+            }
+            dbgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            dbgCtx.clearRect(0, 0, W, H);
+
+            const vm = viewMetrics(), cam = makeCam();
+            for (let i = 0; i < TOTAL; i++) {
+                const q = projectQuad(cards[i].current, cam, vm);
+                if (!q) continue;
+                dbgCtx.beginPath();
+                q.forEach((p, k) => (k ? dbgCtx.lineTo : dbgCtx.moveTo).call(dbgCtx, vm.px + p[0], vm.py + p[1]));
+                dbgCtx.closePath();
+                dbgCtx.lineWidth = i === hoverIdx ? 2 : 1;
+                dbgCtx.strokeStyle = i === hoverIdx ? '#0f0' : 'rgba(255,255,0,.55)';
+                dbgCtx.stroke();
+            }
+            dbgCtx.fillStyle = '#f0f';
+            dbgCtx.fillRect(vm.px - 3, vm.py - 3, 6, 6);
+        }
+
+        /* ------------------------------------------------------------------
+         * Render loop
+         * ------------------------------------------------------------------ */
+
+        function renderLoop() {
+            if (cameraNeedsUpdate) {
+                rootStyle.setProperty('--cam-x', `${camX}px`);
+                rootStyle.setProperty('--cam-y', `${camY}px`);
+                rootStyle.setProperty('--cam-z', `${camZ}px`);
+                rootStyle.setProperty('--rot-x', `${rotX}deg`);
+                rootStyle.setProperty('--rot-y', `${rotY}deg`);
+                cameraNeedsUpdate = false;
+                hoverDirty = true;
+            }
+            if (hoverDirty) {
+                hoverDirty = false;
+                if (lastMouse && !hoverRaf) updateHover();   // re-test when the scene moves under a stationary mouse
+            }
+            if (DEBUG) drawDebug();
+            requestAnimationFrame(renderLoop);
+        }
+
+        /* ------------------------------------------------------------------
+         * Init
+         * ------------------------------------------------------------------ */
+
+        const preferredLang = (navigator.language || 'en').toLowerCase().startsWith('id') ? 'ID' : 'EN';
+        setLang(preferredLang);
+        transformTo('table');
+        requestAnimationFrame(renderLoop);
+    })();
+
+    </script>
+</body>
+</html>
