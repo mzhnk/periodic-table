@@ -1,0 +1,139 @@
+/* Small-screen adjustments */
+@media (max-width: 480px) {
+    :root {
+        --panel-w: 240px;
+    }
+
+    .close-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .helper-text {
+        font-size: 11px;
+        padding: 7px 16px;
+    }
+}
+
+/* Narrow screens: the hamburger owns the top-left corner, so the search
+   bar fills the rest of the row; the category panel overlaps the centered
+   hint, which fades while the panel is open. */
+@media (max-width: 640px) {
+    .search-bar {
+        left: calc(max(20px, env(safe-area-inset-left)) + 56px);
+        right: max(20px, env(safe-area-inset-right));
+        width: auto;
+    }
+
+    .categories-panel {
+        width: min(320px, calc(100vw - 40px));
+    }
+
+    body.cat-open .helper-text { opacity: 0; }
+}
+
+@media (max-width: 380px) {
+    .cat-chip {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+}
+
+/* Touch-sized controls on small screens (44px minimum hit areas) */
+@media (max-width: 640px), (pointer: coarse) {
+    .cat-chip {
+        min-height: 44px;
+        padding: 0 14px;
+    }
+
+    .cat-close {
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+    }
+
+    .search-clear {
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+    }
+}
+
+/* Touch devices: neutralize hover styling that would otherwise stick.
+   A tap leaves :hover applied on touch screens, so every hover look has
+   an explicit resting-state counterpart here. Cards in the lit (filter
+   match) or pressing (hold feedback) states keep their own styling. */
+@media (hover: none) {
+    /* Fixed UI surfaces never hand gestures to the browser (iOS Safari
+       still pinches regardless of user-scalable=no). Scroll containers
+       are excluded here on purpose: touch-action intersects up the
+       ancestor chain, so a `none` on the panel would disable the pan-y
+       of the chip list and menu inside it. */
+    .search-bar,
+    .hamburger,
+    .help-btn,
+    .categories-toggle,
+    .backdrop {
+        touch-action: none;
+    }
+
+    .element:hover:not(.lit):not(.pressing) {
+        background: rgba(var(--color-rgb), 0.08);
+        border-color: rgba(var(--color-rgb), 0.4);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+        z-index: auto;
+    }
+
+    .layout-item:hover {
+        background: transparent;
+        border-color: transparent;
+        color: var(--text-2);
+    }
+
+    .layout-item:hover .item-icon {
+        color: var(--text-3);
+    }
+
+    .layout-item:hover::after {
+        transform: translateX(-100%);
+    }
+
+    .layout-item.selected:hover {
+        color: var(--neon);
+        background: rgba(0, 224, 255, 0.07);
+        border-color: rgba(0, 224, 255, 0.18);
+    }
+
+    .categories-toggle:hover {
+        border-color: var(--border);
+        background: rgba(13, 15, 23, 0.8);
+        color: var(--text-2);
+        box-shadow: none;
+    }
+
+    .cat-chip:hover {
+        color: var(--text-2);
+        border-color: var(--border);
+        background: var(--surface-2);
+    }
+
+    .cat-chip.active:hover {
+        color: rgb(var(--chip-rgb));
+        border-color: rgba(var(--chip-rgb), 0.55);
+        background: rgba(var(--chip-rgb), 0.10);
+    }
+
+    .search-clear:hover {
+        background: var(--surface-2);
+        border-color: var(--border);
+        color: var(--text-3);
+        box-shadow: none;
+    }
+}
+
+/* Keep the hint clear of iOS home-indicator areas */
+@supports (padding: max(0px)) {
+    .helper-text {
+        bottom: max(20px, calc(env(safe-area-inset-bottom) + 16px));
+    }
+}

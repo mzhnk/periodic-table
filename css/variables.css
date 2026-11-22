@@ -1,0 +1,58 @@
+/*
+ * Design tokens shared across every stylesheet.
+ *
+ * The 3D section also defines the custom properties that camera.js writes
+ * every frame (--cam-x/--cam-y/--cam-z/--rot-x/--rot-y), consumed by
+ * css/periodic-table.css.
+ */
+:root {
+    /* Element card dimensions (px) */
+    --w: 130px;
+    --h: 170px;
+
+    /*
+     * Category color palette as RGB triplets, indexed by the `category`
+     * field in js/data/elements.js:
+     *   0 nonmetal          1 noble gas           2 alkali metal
+     *   3 alkaline earth    4 metalloid           5 halogen
+     *   6 post-transition   7 transition metal    8 lanthanide
+     *   9 actinide
+     */
+    --c-0: 255, 60, 60;
+    --c-1: 60, 255, 255;
+    --c-2: 255, 165, 0;
+    --c-3: 255, 220, 0;
+    --c-4: 150, 255, 60;
+    --c-5: 0, 191, 255;
+    --c-6: 255, 105, 180;
+    --c-7: 60, 200, 100;
+    --c-8: 144, 238, 144;
+    --c-9: 221, 160, 221;
+
+    /* Camera rig transform (updated by js/core/camera.js) */
+    --cam-x: 0px;
+    --cam-y: 0px;
+    --cam-z: -2600px;
+    --rot-x: 0deg;
+    --rot-y: 0deg;
+
+    /* UI palette */
+    --bg:          #07080D;
+    --surface:     #0D0F17;
+    --surface-2:   #131622;
+    --surface-3:   #1A1E2E;
+    --border:      rgba(255, 255, 255, 0.055);
+    --border-neon: rgba(0, 224, 255, 0.18);
+    --neon:        #00E0FF;
+    --neon-dim:    rgba(0, 224, 255, 0.08);
+    --neon-glow:   rgba(0, 224, 255, 0.35);
+    --text:        #DDE3F0;
+    --text-2:      #6E7890;
+    --text-3:      #353B52;
+    --panel-w:     260px;
+    --r:           14px;
+
+    /* Motion */
+    --spring:      cubic-bezier(0.16, 1, 0.3, 1);
+    --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+}

@@ -1,0 +1,109 @@
+/*
+ * Element search bar (top right) and its empty-state bubble.
+ *
+ * The bar shares the surface look of the hamburger and other fixed UI:
+ * translucent dark panel, blur, hairline border, neon focus ring.
+ */
+
+.search-bar {
+    position: fixed;
+    top: max(20px, env(safe-area-inset-top));
+    right: max(20px, env(safe-area-inset-right));
+    width: 320px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(13, 15, 23, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color .25s, box-shadow .25s;
+    z-index: 120;
+    font-family: 'Outfit', sans-serif;
+}
+
+.search-bar:focus-within {
+    border-color: rgba(0, 224, 255, 0.35);
+    box-shadow: 0 0 0 3px rgba(0, 224, 255, 0.06), 0 0 18px rgba(0, 224, 255, 0.08);
+}
+
+.search-icon {
+    color: var(--text-3);
+    font-size: 13px;
+    transition: color .25s;
+}
+
+.search-bar:focus-within .search-icon { color: var(--neon); }
+
+#searchInput {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: none;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13.5px;
+    letter-spacing: .01em;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+#searchInput::placeholder { color: var(--text-2); }
+
+.search-clear {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-3);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: 0.2s;
+}
+
+/* The display:flex above beats the UA's [hidden] rule; restate it. */
+.search-clear[hidden] { display: none; }
+
+.search-clear:hover {
+    background: rgba(255, 75, 75, 0.15);
+    border-color: rgba(255, 75, 75, 0.3);
+    color: #FF6B6B;
+    box-shadow: 0 0 12px rgba(255, 75, 75, 0.2);
+}
+
+.search-clear:focus-visible {
+    outline: 2px solid var(--neon);
+    outline-offset: 2px;
+}
+
+/* Floating empty-state bubble under the bar */
+.search-empty {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 75, 75, 0.25);
+    background: rgba(13, 15, 23, 0.92);
+    backdrop-filter: blur(10px);
+    color: rgba(255, 130, 130, 0.9);
+    font-size: 12px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    /* Purely informational: never block the scene beneath it. */
+    pointer-events: none;
+}
+
+.search-empty[hidden] { display: none; }
