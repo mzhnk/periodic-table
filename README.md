@@ -518,5 +518,8 @@ Lower <code>ELEMENT_HOLD_DURATION_MS</code> (for example <code>150</code>). The 
 - [Font Awesome Free](https://fontawesome.com) for icons (CC BY 4.0 / OFL / MIT)
 - [Google Fonts](https://fonts.google.com): Outfit, JetBrains Mono, Share Tech Mono (OFL)
 
+## License
+
+Provided as-is for educational purposes. The element property data is compiled from public chemistry references (IUPAC standard atomic weights and common textbooks).
 
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0F6675&height=120&section=footer&animation=fadeIn" alt="" />
